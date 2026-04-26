@@ -6,7 +6,7 @@ import ArticleCard from '@/components/ArticleCard'
 export const revalidate = 3600
 
 export default async function HomePage() {
-  const articles = await getPublishedArticles()
+  const articles = await getPublishedArticles().catch(() => [])
   const recent = articles.slice(0, 6)
 
   return (

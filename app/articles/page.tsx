@@ -19,7 +19,7 @@ type Props = {
 }
 
 export default async function ArticlesPage({ searchParams }: Props) {
-  const allArticles = await getPublishedArticles()
+  const allArticles = await getPublishedArticles().catch(() => [])
   const selectedSlug = searchParams.category
   const selectedName = selectedSlug ? CATEGORY_SLUG_TO_NAME[selectedSlug] : null
 
