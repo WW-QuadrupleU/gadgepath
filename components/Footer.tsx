@@ -26,9 +26,10 @@ export default function Footer() {
           <div>
             <p className="text-white font-semibold mb-3 text-sm">サイト情報</p>
             <ul className="space-y-1 text-xs">
-              <li><Link href="/about" className="hover:text-brand-green transition-colors">このサイトについて</Link></li>
+              <li><Link href="/about" className="hover:text-brand-green transition-colors">運営者情報</Link></li>
               <li><Link href="/privacy" className="hover:text-brand-green transition-colors">プライバシーポリシー</Link></li>
               <li><Link href="/disclosure" className="hover:text-brand-green transition-colors">アフィリエイト開示</Link></li>
+              <li><Link href="/contact" className="hover:text-brand-green transition-colors">お問い合わせ</Link></li>
             </ul>
           </div>
         </div>
