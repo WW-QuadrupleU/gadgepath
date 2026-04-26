@@ -1,7 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['www.notion.so', 'notion.so', 's3.us-west-2.amazonaws.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'www.notion.so' },
+      { protocol: 'https', hostname: 'notion.so' },
+      { protocol: 'https', hostname: 's3.us-west-2.amazonaws.com' },
+    ],
   },
 }
 
