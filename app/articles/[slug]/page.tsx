@@ -8,7 +8,7 @@ import Link from 'next/link'
 export const revalidate = 3600
 
 type Props = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateStaticParams() {
@@ -21,7 +21,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await getArticleBySlug(params.slug)
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
   if (!article) return {}
   return {
     title: article.title,
@@ -36,7 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const article = await getArticleBySlug(params.slug)
+  const { slug } = await params
+  const article = await getArticleBySlug(slug)
   if (!article) notFound()
 
   return (
