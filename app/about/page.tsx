@@ -19,8 +19,8 @@ export default function AboutPage() {
               {[
                 ['サイト名', 'ガジェパス'],
                 ['URL', 'https://gadgepath.com'],
-                ['開設', '2025年4月'],
-                ['運営者', 'choieigo'],
+                ['開設', '2026年4月'],
+                ['運営者', 'QU'],
                 ['連絡先', 'contact@gadgepath.com'],
               ].map(([label, value]) => (
                 <tr key={label} className="border-b border-gray-100">

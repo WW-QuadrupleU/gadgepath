@@ -15,12 +15,12 @@ const CATEGORY_SLUG_TO_NAME: Record<string, string> = Object.fromEntries(
 )
 
 type Props = {
-  searchParams: { category?: string }
+  searchParams: Promise<{ category?: string }>
 }
 
 export default async function ArticlesPage({ searchParams }: Props) {
   const allArticles = await getPublishedArticles().catch(() => [])
-  const selectedSlug = searchParams.category
+  const { category: selectedSlug } = await searchParams
   const selectedName = selectedSlug ? CATEGORY_SLUG_TO_NAME[selectedSlug] : null
 
   const articles = selectedName
