@@ -17,10 +17,10 @@ export default function ContactPage() {
       <div className="bg-white border border-gray-200 rounded-xl px-6 py-5 text-sm">
         <p className="text-gray-500 mb-1">メールアドレス</p>
         <a
-          href="mailto:gadgepath@gmail.com"
+          href="mailto:contact@gadgepath.com"
           className="text-brand-green font-medium text-base underline hover:opacity-80"
         >
-          gadgepath@gmail.com
+          contact@gadgepath.com
         </a>
       </div>
 

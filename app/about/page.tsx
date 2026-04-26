@@ -21,7 +21,7 @@ export default function AboutPage() {
                 ['URL', 'https://gadgepath.com'],
                 ['開設', '2025年4月'],
                 ['運営者', 'choieigo'],
-                ['連絡先', 'gadgepath@gmail.com'],
+                ['連絡先', 'contact@gadgepath.com'],
               ].map(([label, value]) => (
                 <tr key={label} className="border-b border-gray-100">
                   <td className="py-2.5 pr-4 font-medium text-gray-500 whitespace-nowrap w-28">{label}</td>
@@ -76,8 +76,8 @@ export default function AboutPage() {
             ご意見・ご質問・掲載内容に関するご指摘などは、下記メールアドレスまでお気軽にご連絡ください。
           </p>
           <p className="mt-2">
-            <a href="mailto:gadgepath@gmail.com" className="text-brand-green underline hover:opacity-80">
-              gadgepath@gmail.com
+            <a href="mailto:contact@gadgepath.com" className="text-brand-green underline hover:opacity-80">
+              contact@gadgepath.com
             </a>
           </p>
         </section>

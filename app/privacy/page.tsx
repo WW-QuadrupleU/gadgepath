@@ -59,7 +59,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-bold text-base text-brand-text mb-2">お問い合わせ</h2>
           <p>本ポリシーに関するお問い合わせは、下記までご連絡ください。</p>
-          <p className="mt-2">メール：<a href="mailto:gadgepath@gmail.com" className="text-brand-green underline hover:opacity-80">gadgepath@gmail.com</a></p>
+          <p className="mt-2">メール：<a href="mailto:contact@gadgepath.com" className="text-brand-green underline hover:opacity-80">contact@gadgepath.com</a></p>
         </section>
 
       </div>
