@@ -87,7 +87,28 @@ export default async function ArticlePage({ params }: Props) {
 
       {/* Article content */}
       <article className="article-content">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({ href, children }) => {
+              const isExternal = href?.startsWith('http')
+              const isAmazon = href && (href.includes('amazon.co.jp') || href.includes('amzn.to') || href.includes('amzn.asia'))
+              const isRakuten = href && href.includes('rakuten')
+              const className = isAmazon ? 'btn-amazon' : isRakuten ? 'btn-rakuten' : undefined
+              return (
+                <a
+                  href={href}
+                  className={className}
+                  {...(isExternal
+                    ? { target: '_blank', rel: 'noopener noreferrer nofollow' }
+                    : {})}
+                >
+                  {children}
+                </a>
+              )
+            },
+          }}
+        >
           {article.content}
         </ReactMarkdown>
       </article>
