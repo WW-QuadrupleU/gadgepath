@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { getPublishedArticles, CATEGORIES } from '@/lib/notion'
 import ArticleCard from '@/components/ArticleCard'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const revalidate = 3600
 
@@ -49,13 +50,14 @@ export default async function ArticlesPage({ searchParams }: Props) {
           <Link
             key={cat.slug}
             href={`/articles?category=${cat.slug}`}
-            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border transition-colors ${
               selectedSlug === cat.slug
                 ? 'bg-brand-dark text-white border-brand-dark'
                 : 'border-gray-300 text-gray-600 hover:border-brand-green hover:text-brand-green'
             }`}
           >
-            {cat.emoji} {cat.name}
+            <Image src={cat.icon} alt={cat.name} width={14} height={14} className={selectedSlug === cat.slug ? '' : 'opacity-70'} />
+            {cat.name}
           </Link>
         ))}
       </div>

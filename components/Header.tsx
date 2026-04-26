@@ -21,12 +21,6 @@ export default function Header() {
             <Link href="/articles" className="hover:text-brand-green transition-colors">
               記事一覧
             </Link>
-            <Link
-              href="/articles"
-              className="bg-brand-green text-brand-dark font-bold px-3 py-1 rounded hover:opacity-90 transition-opacity"
-            >
-              比較する
-            </Link>
           </nav>
         </div>
       </div>
