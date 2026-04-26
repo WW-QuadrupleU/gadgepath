@@ -75,12 +75,12 @@ export async function getAllSlugs(): Promise<{ slug: string }[]> {
 }
 
 export const CATEGORIES = [
-  { name: 'マイク', slug: 'mic', emoji: '🎙️' },
-  { name: 'カメラ', slug: 'camera', emoji: '📷' },
-  { name: '照明', slug: 'light', emoji: '💡' },
-  { name: 'ヘッドセット', slug: 'headset', emoji: '🎧' },
-  { name: 'SSD・ストレージ', slug: 'storage', emoji: '💾' },
-  { name: 'USBハブ', slug: 'hub', emoji: '🔌' },
-  { name: '機材セット', slug: 'set', emoji: '📦' },
-  { name: 'キャプチャーボード', slug: 'capture', emoji: '🎮' },
+  { name: 'マイク', slug: 'mic', emoji: '🎙️', icon: '/icons/mic.png' },
+  { name: 'カメラ', slug: 'camera', emoji: '📷', icon: '/icons/camera.png' },
+  { name: '照明', slug: 'light', emoji: '💡', icon: '/icons/light.png' },
+  { name: 'ヘッドセット', slug: 'headset', emoji: '🎧', icon: '/icons/headset.png' },
+  { name: 'SSD・ストレージ', slug: 'storage', emoji: '💾', icon: '/icons/storage.png' },
+  { name: 'USBハブ', slug: 'hub', emoji: '🔌', icon: '/icons/hub.png' },
+  { name: '機材セット', slug: 'set', emoji: '📦', icon: '/icons/set.png' },
+  { name: 'キャプチャーボード', slug: 'capture', emoji: '🎮', icon: '/icons/capture.png' },
 ]

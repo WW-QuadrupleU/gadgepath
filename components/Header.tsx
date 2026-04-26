@@ -37,9 +37,9 @@ export default function Header() {
               <Link
                 key={cat.slug}
                 href={`/articles?category=${cat.slug}`}
-                className="flex items-center gap-1 whitespace-nowrap hover:text-brand-green transition-colors"
+                className="flex items-center gap-1.5 whitespace-nowrap hover:text-brand-green transition-colors"
               >
-                <span>{cat.emoji}</span>
+                <Image src={cat.icon} alt={cat.name} width={16} height={16} className="opacity-80" />
                 <span>{cat.name}</span>
               </Link>
             ))}

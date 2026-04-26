@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { getPublishedArticles } from '@/lib/notion'
 import { CATEGORIES } from '@/lib/notion'
 import ArticleCard from '@/components/ArticleCard'
@@ -39,9 +40,9 @@ export default async function HomePage() {
             <Link
               key={cat.slug}
               href={`/articles?category=${cat.slug}`}
-              className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-brand-green hover:shadow-sm transition-all text-sm font-medium text-brand-text"
+              className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-brand-green hover:shadow-sm transition-all text-sm font-medium text-brand-text"
             >
-              <span className="text-xl">{cat.emoji}</span>
+              <Image src={cat.icon} alt={cat.name} width={28} height={28} className="shrink-0" />
               <span>{cat.name}</span>
             </Link>
           ))}
@@ -71,17 +72,23 @@ export default async function HomePage() {
           <h2 className="text-base font-bold text-brand-text text-center mb-7">ガジェパスが選ばれる理由</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
             <div>
-              <div className="text-3xl mb-2">🎯</div>
+              <div className="flex justify-center mb-3">
+                <Image src="/icons/reason-target.png" alt="用途別に比較" width={56} height={56} />
+              </div>
               <h3 className="font-bold text-sm mb-1">用途別に比較</h3>
               <p className="text-xs text-gray-500 leading-relaxed">配信・動画・テレワークなど用途に合わせた機材選びをサポート</p>
             </div>
             <div>
-              <div className="text-3xl mb-2">💡</div>
+              <div className="flex justify-center mb-3">
+                <Image src="/icons/reason-creator.png" alt="現役クリエイターが執筆" width={56} height={56} />
+              </div>
               <h3 className="font-bold text-sm mb-1">現役クリエイターが執筆</h3>
               <p className="text-xs text-gray-500 leading-relaxed">YouTube・TikTokで実際に使用した経験をもとに解説</p>
             </div>
             <div>
-              <div className="text-3xl mb-2">💰</div>
+              <div className="flex justify-center mb-3">
+                <Image src="/icons/reason-budget.png" alt="予算別に提案" width={56} height={56} />
+              </div>
               <h3 className="font-bold text-sm mb-1">予算別に提案</h3>
               <p className="text-xs text-gray-500 leading-relaxed">入門〜プロまで、各予算帯に最適なコスパ重視の選び方を紹介</p>
             </div>
