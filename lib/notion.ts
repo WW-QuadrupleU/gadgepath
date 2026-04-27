@@ -83,4 +83,5 @@ export const CATEGORIES = [
   { name: 'USBハブ', slug: 'hub', emoji: '🔌', icon: '/icons/hub.png' },
   { name: '機材セット', slug: 'set', emoji: '📦', icon: '/icons/set.png' },
   { name: 'キャプチャーボード', slug: 'capture', emoji: '🎮', icon: '/icons/capture.png' },
+  { name: 'AIツール', slug: 'ai', emoji: '🤖', icon: '/icons/ai.svg' },
 ]
