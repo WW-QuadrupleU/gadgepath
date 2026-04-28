@@ -5,6 +5,7 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const n2m = new NotionToMarkdown({ notionClient: notion })
 
 const ARTICLES_DB = process.env.NOTION_ARTICLES_DB_ID!
+const PRODUCTS_DB = 'c0f456c33c5740bc8d90025630236014'
 
 export type Article = {
   id: string
@@ -74,6 +75,52 @@ export async function getAllSlugs(): Promise<{ slug: string }[]> {
   }))
 }
 
+// ────────────────────────────────────────
+// 商品データベース
+// ────────────────────────────────────────
+export type Product = {
+  id: string
+  name: string
+  slug: string
+  rakutenUrl: string
+  price: string
+  imageUrl: string
+  category: string
+  articleSlugs: string[]
+  displayOrder: number
+}
+
+function pageToProduct(page: any): Product {
+  return {
+    id: page.id,
+    name: page.properties['商品名']?.title[0]?.plain_text || '',
+    slug: page.properties['スラッグ']?.rich_text[0]?.plain_text || '',
+    rakutenUrl: page.properties['楽天URL']?.url || '',
+    price: page.properties['価格']?.rich_text[0]?.plain_text || '',
+    imageUrl: page.properties['画像URL']?.url || '',
+    category: page.properties['カテゴリ']?.select?.name || '',
+    articleSlugs: page.properties['記事スラッグ']?.multi_select?.map((s: any) => s.name) || [],
+    displayOrder: page.properties['表示順']?.number ?? 999,
+  }
+}
+
+export async function getProductsByArticleSlug(articleSlug: string): Promise<Product[]> {
+  try {
+    const response = await notion.databases.query({
+      database_id: PRODUCTS_DB,
+      filter: {
+        property: '記事スラッグ',
+        multi_select: { contains: articleSlug },
+      },
+      sorts: [{ property: '表示順', direction: 'ascending' }],
+    })
+    return response.results.map(pageToProduct)
+  } catch {
+    return []
+  }
+}
+
+// ────────────────────────────────────────
 export const CATEGORIES = [
   { name: 'マイク', slug: 'mic', emoji: '🎙️', icon: '/icons/mic.png' },
   { name: 'カメラ', slug: 'camera', emoji: '📷', icon: '/icons/camera.png' },

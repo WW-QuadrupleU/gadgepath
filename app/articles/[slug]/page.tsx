@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticleBySlug, getAllSlugs } from '@/lib/notion'
+import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug } from '@/lib/notion'
+import ProductCard from '@/components/ProductCard'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
@@ -49,7 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
-  const article = await getArticleBySlug(slug)
+  const [article, products] = await Promise.all([
+    getArticleBySlug(slug),
+    getProductsByArticleSlug(slug),
+  ])
   if (!article) notFound()
 
   return (
@@ -154,6 +158,20 @@ export default async function ArticlePage({ params }: Props) {
           {article.content}
         </ReactMarkdown>
       </article>
+
+      {/* 商品一覧 */}
+      {products.length > 0 && (
+        <section className="mt-12 pt-8 border-t border-gray-200">
+          <h2 className="text-base font-bold text-brand-text mb-4">
+            この記事で紹介した商品
+          </h2>
+          <div className="space-y-3">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Back link */}
       <div className="mt-12 pt-6 border-t border-gray-200">
