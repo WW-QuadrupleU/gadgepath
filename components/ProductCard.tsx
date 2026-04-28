@@ -43,7 +43,7 @@ export default function ProductCard({ product }: Props) {
 
       {/* 商品情報 */}
       <div className="flex flex-col justify-between flex-1 min-w-0">
-        <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-2">
+        <p className="text-base font-bold text-brand-text leading-snug line-clamp-2">
           {product.name}
         </p>
         {product.price && (
