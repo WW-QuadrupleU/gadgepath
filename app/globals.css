@@ -30,6 +30,9 @@
 .article-content h3 {
   @apply text-lg font-bold text-brand-text mt-7 mb-3;
 }
+.article-content h4 {
+  @apply text-base font-bold text-brand-text mt-6 mb-2;
+}
 .article-content p {
   @apply text-sm leading-relaxed mb-4 text-gray-700;
 }
@@ -52,7 +55,7 @@
   @apply no-underline inline-flex items-center gap-2 bg-[#FF9900] text-white font-bold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity;
 }
 .article-content a.btn-rakuten {
-  @apply no-underline inline-flex items-center gap-2 bg-[#BF0000] text-white font-bold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity;
+  @apply no-underline inline-flex items-center gap-2 bg-[#BF0000] hover:bg-[#a30000] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition-all duration-150;
 }
 .article-content .buy-buttons {
   @apply flex flex-wrap gap-3 my-6;
