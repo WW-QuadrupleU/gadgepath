@@ -11,29 +11,30 @@ import Image from 'next/image'
 const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
 const normalize = (s: string) => s.toLowerCase().replace(/[\s\-_+・（）()【】「」『』]/g, '')
 
-// ヘッダー行（##〜####）にAmazon検索URLがあり商品DBにマッチする場合、
-// 直後に [!!GADGE_CARD!!](url) マーカー行を挿入する（aレンダラーで商品カードに変換）
+// ヘッダー行（#〜####）にAmazon検索URLがあり商品DBにマッチする場合、
+// 直後に空行＋カードマーカー行＋空行を挿入する（aレンダラーで商品カードに変換）
 function injectProductCardMarkers(content: string, products: import('@/lib/notion').Product[]): string {
-  const lines = content.split('\n')
-  const result: string[] = []
-  for (const line of lines) {
-    result.push(line)
-    const match = line.match(/^#{2,4}\s.*\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]+)\)/)
-    if (!match) continue
-    try {
-      const url = new URL(match[1])
-      const keyword = url.searchParams.get('k') || ''
-      const nk = normalize(keyword)
-      const matched = products.find(p => {
-        const n = normalize(p.name), s = normalize(p.slug)
-        return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-      })
-      if (matched?.rakutenUrl && matched?.imageUrl) {
-        result.push(`[!!GADGE_CARD!!](${match[1]})`)
-      }
-    } catch {}
-  }
-  return result.join('\n')
+  // \r\n を \n に統一してから処理
+  const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  return normalized.replace(
+    /^(#{1,4} .*\[.+?\]\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]*)\).*)$/gm,
+    (fullLine, _lineContent, amazonUrl) => {
+      try {
+        const url = new URL(amazonUrl)
+        const keyword = url.searchParams.get('k') || ''
+        const nk = normalize(keyword)
+        const matched = products.find(p => {
+          const n = normalize(p.name), s = normalize(p.slug)
+          return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+        })
+        if (matched?.rakutenUrl && matched?.imageUrl) {
+          // 空行で囲んで独立した段落にする
+          return `${fullLine}\n\n[!!GADGE_CARD!!](${amazonUrl})\n`
+        }
+      } catch {}
+      return fullLine
+    }
+  )
 }
 
 export const revalidate = 3600
@@ -80,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // 記事本文中・見出し直後に表示する商品カード（画像付き）
 function InlineProductCard({ product, affiliateUrl }: { product: Product; affiliateUrl: string }) {
   return (
-    <div className="not-prose my-3 flex gap-3 bg-white border border-gray-200 rounded-xl p-3 hover:border-brand-green hover:shadow-sm transition-all duration-200">
+    <div data-product-card="true" className="not-prose my-3 flex gap-3 bg-white border border-gray-200 rounded-xl p-3 hover:border-brand-green hover:shadow-sm transition-all duration-200">
       <div className="relative flex-shrink-0 w-20 h-20 bg-gray-50 rounded-lg overflow-hidden">
         <Image
           src={product.imageUrl}
@@ -178,6 +179,21 @@ export default async function ArticlePage({ params }: Props) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
+            // 商品カードが入った <p> は <p> を取り除いてそのまま返す（div-in-p の無効HTML回避）
+            p: ({ children }) => {
+              const arr = Array.isArray(children) ? children : [children]
+              if (
+                arr.length === 1 &&
+                typeof arr[0] === 'object' &&
+                arr[0] !== null &&
+                'props' in (arr[0] as object) &&
+                (arr[0] as React.ReactElement).props?.['data-product-card']
+              ) {
+                return <>{arr[0]}</>
+              }
+              return <p>{children}</p>
+            },
+
             a: ({ href, children }) => {
               const isExternal = href?.startsWith('http')
               const isAmazonSearch = href?.includes('amazon.co.jp/s?k=') || href?.includes('amazon.co.jp/s/?k=')
