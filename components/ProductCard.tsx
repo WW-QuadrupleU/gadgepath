@@ -4,7 +4,16 @@ import type { Product } from '@/lib/notion'
 const MOSHIMO_A_ID = '5519982'
 
 function buildAffiliateUrl(rakutenUrl: string): string {
-  return `https://af.moshimo.com/af/c/click?a_id=${MOSHIMO_A_ID}&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(rakutenUrl)}`
+  try {
+    const url = new URL(rakutenUrl)
+    // 他社アフィリエイトパラメータを除去してクリーンなURLに
+    url.searchParams.delete('scid')
+    url.searchParams.delete('sc2id')
+    const cleanUrl = url.toString()
+    return `https://af.moshimo.com/af/c/click?a_id=${MOSHIMO_A_ID}&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(cleanUrl)}`
+  } catch {
+    return `https://af.moshimo.com/af/c/click?a_id=${MOSHIMO_A_ID}&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(rakutenUrl)}`
+  }
 }
 
 type Props = { product: Product }
