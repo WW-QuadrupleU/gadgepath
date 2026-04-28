@@ -121,7 +121,10 @@ export default async function ArticlePage({ params }: Props) {
               const isExternal = href?.startsWith('http')
               const isAmazonSearch = href?.includes('amazon.co.jp/s?k=') || href?.includes('amazon.co.jp/s/?k=')
               const isAmazon = href && (href.includes('amazon.co.jp') || href.includes('amzn.to') || href.includes('amzn.asia'))
-              const isRakuten = href && (href.includes('rakuten') || href.includes('moshimo'))
+              const isRakutenDirect = href && href.includes('rakuten.co.jp') && !href.includes('af.moshimo.com')
+              const isMoshimo = href && href.includes('moshimo')
+
+              const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
 
               // Amazon検索URLを楽天アフィリエイトリンクに自動変換
               if (isAmazonSearch && href) {
@@ -129,7 +132,7 @@ export default async function ArticlePage({ params }: Props) {
                   const url = new URL(href)
                   const keyword = url.searchParams.get('k') || ''
                   const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
-                  const affiliateUrl = `https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(rakutenUrl)}`
+                  const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(rakutenUrl)}`
                   return (
                     <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
                       楽天市場で見る
@@ -140,7 +143,26 @@ export default async function ArticlePage({ params }: Props) {
                 }
               }
 
-              const className = isAmazon ? 'btn-amazon' : isRakuten ? 'btn-rakuten' : undefined
+              // 楽天URLを全てもしもアフィリエイト経由に変換（他社パラメータも除去）
+              if (isRakutenDirect && href) {
+                try {
+                  const url = new URL(href)
+                  // 他社アフィリエイトパラメータを除去してクリーンなURLに
+                  url.searchParams.delete('scid')
+                  url.searchParams.delete('sc2id')
+                  const cleanUrl = url.toString()
+                  const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(cleanUrl)}`
+                  return (
+                    <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
+                      {children}
+                    </a>
+                  )
+                } catch {
+                  // URL解析失敗時はそのまま表示
+                }
+              }
+
+              const className = isAmazon ? 'btn-amazon' : isMoshimo ? 'btn-rakuten' : undefined
               return (
                 <a
                   href={href}
