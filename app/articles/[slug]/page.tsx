@@ -115,8 +115,27 @@ export default async function ArticlePage({ params }: Props) {
           components={{
             a: ({ href, children }) => {
               const isExternal = href?.startsWith('http')
+              const isAmazonSearch = href?.includes('amazon.co.jp/s?k=') || href?.includes('amazon.co.jp/s/?k=')
               const isAmazon = href && (href.includes('amazon.co.jp') || href.includes('amzn.to') || href.includes('amzn.asia'))
-              const isRakuten = href && href.includes('rakuten')
+              const isRakuten = href && (href.includes('rakuten') || href.includes('moshimo'))
+
+              // Amazon検索URLを楽天アフィリエイトリンクに自動変換
+              if (isAmazonSearch && href) {
+                try {
+                  const url = new URL(href)
+                  const keyword = url.searchParams.get('k') || ''
+                  const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
+                  const affiliateUrl = `https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url=${encodeURIComponent(rakutenUrl)}`
+                  return (
+                    <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
+                      楽天市場で見る
+                    </a>
+                  )
+                } catch {
+                  // URL解析失敗時はそのまま表示
+                }
+              }
+
               const className = isAmazon ? 'btn-amazon' : isRakuten ? 'btn-rakuten' : undefined
               return (
                 <a
