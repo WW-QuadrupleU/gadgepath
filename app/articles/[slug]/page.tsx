@@ -11,30 +11,56 @@ import Image from 'next/image'
 const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
 const normalize = (s: string) => s.toLowerCase().replace(/[\s\-_+・（）()【】「」『』]/g, '')
 
-// ヘッダー行（#〜####）にAmazon検索URLがあり商品DBにマッチする場合、
-// 直後に空行＋カードマーカー行＋空行を挿入する（aレンダラーで商品カードに変換）
-function injectProductCardMarkers(content: string, products: import('@/lib/notion').Product[]): string {
-  // \r\n を \n に統一してから処理
+// 記事Markdownを前処理：Amazon検索URLを含む全行を走査し
+// ① 実売価格テキストを商品DBの実価格に置換
+// ② 画像URLあり商品は直後にカードマーカー挿入
+function preprocessContent(content: string, products: import('@/lib/notion').Product[]): string {
   const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  return normalized.replace(
-    /^(#{1,4} .*\[.+?\]\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]*)\).*)$/gm,
-    (fullLine, _lineContent, amazonUrl) => {
-      try {
-        const url = new URL(amazonUrl)
-        const keyword = url.searchParams.get('k') || ''
-        const nk = normalize(keyword)
-        const matched = products.find(p => {
-          const n = normalize(p.name), s = normalize(p.slug)
-          return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-        })
-        if (matched?.rakutenUrl && matched?.imageUrl) {
-          // 空行で囲んで独立した段落にする
-          return `${fullLine}\n\n[!!GADGE_CARD!!](${amazonUrl})\n`
-        }
-      } catch {}
-      return fullLine
+  const lines = normalized.split('\n')
+  const result: string[] = []
+
+  for (const line of lines) {
+    // Amazon検索リンクを含む行を検出（見出しかどうかは問わない）
+    const urlMatch = line.match(/\]\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]+)\)/)
+    if (!urlMatch) {
+      result.push(line)
+      continue
     }
-  )
+
+    let processedLine = line
+    let insertCard = false
+
+    try {
+      const url = new URL(urlMatch[1])
+      const keyword = url.searchParams.get('k') || ''
+      const nk = normalize(keyword)
+      const matched = products.find(p => {
+        const n = normalize(p.name), s = normalize(p.slug)
+        return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+      })
+
+      if (matched) {
+        // ① 実売価格テキストを実価格に置換
+        if (matched.price) {
+          const actual = formatPrice(matched.price)
+          processedLine = processedLine.replace(/実売価格[：:].*$/, `実売価格：${actual}`)
+        }
+        // ② 画像＋楽天URLあり → カード挿入フラグ
+        if (matched.rakutenUrl && matched.imageUrl) {
+          insertCard = true
+        }
+      }
+    } catch {}
+
+    result.push(processedLine)
+    if (insertCard) {
+      result.push('')
+      result.push(`[!!GADGE_CARD!!](${urlMatch[1]})`)
+      result.push('')
+    }
+  }
+
+  return result.join('\n')
 }
 
 export const revalidate = 3600
@@ -265,7 +291,7 @@ export default async function ArticlePage({ params }: Props) {
             },
           }}
         >
-          {injectProductCardMarkers(article.content, products)}
+          {preprocessContent(article.content, products)}
         </ReactMarkdown>
       </article>
 
