@@ -125,12 +125,34 @@ export default async function ArticlePage({ params }: Props) {
               const isMoshimo = href && href.includes('moshimo')
 
               const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
+              const normalize = (s: string) => s.toLowerCase().replace(/[\s\-_+・（）()【】「」『』]/g, '')
 
-              // Amazon検索URLを楽天アフィリエイトリンクに自動変換
+              // Amazon検索URL → 商品DBに直リンクあれば優先使用、なければ楽天検索に変換
               if (isAmazonSearch && href) {
                 try {
                   const url = new URL(href)
                   const keyword = url.searchParams.get('k') || ''
+                  const normalizedKeyword = normalize(keyword)
+
+                  // 商品DBの楽天URLと照合
+                  const matched = products.find(p => {
+                    const n = normalize(p.name)
+                    const s = normalize(p.slug)
+                    return normalizedKeyword.includes(n) || n.includes(normalizedKeyword) ||
+                           normalizedKeyword.includes(s) || s.includes(normalizedKeyword)
+                  })
+
+                  if (matched?.rakutenUrl) {
+                    // 直リンクをアフィリエイト経由に変換
+                    const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
+                    return (
+                      <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
+                        楽天市場で見る
+                      </a>
+                    )
+                  }
+
+                  // 未登録の場合は楽天検索にフォールバック
                   const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
                   const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(rakutenUrl)}`
                   return (
@@ -147,7 +169,6 @@ export default async function ArticlePage({ params }: Props) {
               if (isRakutenDirect && href) {
                 try {
                   const url = new URL(href)
-                  // 他社アフィリエイトパラメータを除去してクリーンなURLに
                   url.searchParams.delete('scid')
                   url.searchParams.delete('sc2id')
                   const cleanUrl = url.toString()
