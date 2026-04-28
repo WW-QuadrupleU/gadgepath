@@ -11,6 +11,31 @@ import Image from 'next/image'
 const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
 const normalize = (s: string) => s.toLowerCase().replace(/[\s\-_+・（）()【】「」『』]/g, '')
 
+// ヘッダー行（##〜####）にAmazon検索URLがあり商品DBにマッチする場合、
+// 直後に [!!GADGE_CARD!!](url) マーカー行を挿入する（aレンダラーで商品カードに変換）
+function injectProductCardMarkers(content: string, products: import('@/lib/notion').Product[]): string {
+  const lines = content.split('\n')
+  const result: string[] = []
+  for (const line of lines) {
+    result.push(line)
+    const match = line.match(/^#{2,4}\s.*\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]+)\)/)
+    if (!match) continue
+    try {
+      const url = new URL(match[1])
+      const keyword = url.searchParams.get('k') || ''
+      const nk = normalize(keyword)
+      const matched = products.find(p => {
+        const n = normalize(p.name), s = normalize(p.slug)
+        return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+      })
+      if (matched?.rakutenUrl && matched?.imageUrl) {
+        result.push(`[!!GADGE_CARD!!](${match[1]})`)
+      }
+    } catch {}
+  }
+  return result.join('\n')
+}
+
 export const revalidate = 3600
 
 type Props = {
@@ -67,7 +92,7 @@ function InlineProductCard({ product, affiliateUrl }: { product: Product; affili
         />
       </div>
       <div className="flex flex-col justify-between flex-1 min-w-0">
-        <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-2">{product.name}</p>
+        <p className="text-base font-bold text-brand-text leading-snug line-clamp-2">{product.name}</p>
         {product.price && <p className="text-xs text-gray-500 mt-1">{formatPrice(product.price)}</p>}
         <div className="mt-2">
           <a
@@ -153,49 +178,6 @@ export default async function ArticlePage({ params }: Props) {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            // h4見出し（####）の直後に商品カードを挿入
-            h4: ({ node, children, ...props }) => {
-              // hast ASTからAmazon検索URLを探す
-              const findAmazonHref = (nodes: any[]): string | null => {
-                for (const n of nodes || []) {
-                  if (n.type === 'element' && n.tagName === 'a') {
-                    const href: string = n.properties?.href || ''
-                    if (href.includes('amazon.co.jp/s')) return href
-                  }
-                  const found = findAmazonHref(n.children || [])
-                  if (found) return found
-                }
-                return null
-              }
-
-              let imageCard: React.ReactNode = null
-              const amazonHref = findAmazonHref((node as any)?.children || [])
-              if (amazonHref) {
-                try {
-                  const url = new URL(amazonHref)
-                  const keyword = url.searchParams.get('k') || ''
-                  const normalizedKeyword = normalize(keyword)
-                  const matched = products.find(p => {
-                    const n = normalize(p.name)
-                    const s = normalize(p.slug)
-                    return normalizedKeyword.includes(n) || n.includes(normalizedKeyword) ||
-                           normalizedKeyword.includes(s) || s.includes(normalizedKeyword)
-                  })
-                  if (matched?.rakutenUrl && matched?.imageUrl) {
-                    const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
-                    imageCard = <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
-                  }
-                } catch {}
-              }
-
-              return (
-                <>
-                  <h4 {...props}>{children}</h4>
-                  {imageCard}
-                </>
-              )
-            },
-
             a: ({ href, children }) => {
               const isExternal = href?.startsWith('http')
               const isAmazonSearch = href?.includes('amazon.co.jp/s?k=') || href?.includes('amazon.co.jp/s/?k=')
@@ -203,17 +185,37 @@ export default async function ArticlePage({ params }: Props) {
               const isRakutenDirect = href && href.includes('rakuten.co.jp') && !href.includes('af.moshimo.com')
               const isMoshimo = href && href.includes('moshimo')
 
+              // 商品カードマーカーの検出 → InlineProductCard を返す
+              const childText = Array.isArray(children)
+                ? children.map((c) => (typeof c === 'string' ? c : '')).join('')
+                : typeof children === 'string' ? children : ''
+
+              if (childText === '!!GADGE_CARD!!' && isAmazonSearch && href) {
+                try {
+                  const url = new URL(href)
+                  const keyword = url.searchParams.get('k') || ''
+                  const nk = normalize(keyword)
+                  const matched = products.find(p => {
+                    const n = normalize(p.name), s = normalize(p.slug)
+                    return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+                  })
+                  if (matched?.rakutenUrl && matched?.imageUrl) {
+                    const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
+                    return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
+                  }
+                } catch {}
+                return null
+              }
+
               // Amazon検索URL → 商品名テキストを維持したまま楽天アフィリエイトリンクに変換
               if (isAmazonSearch && href) {
                 try {
                   const url = new URL(href)
                   const keyword = url.searchParams.get('k') || ''
-                  const normalizedKeyword = normalize(keyword)
+                  const nk = normalize(keyword)
                   const matched = products.find(p => {
-                    const n = normalize(p.name)
-                    const s = normalize(p.slug)
-                    return normalizedKeyword.includes(n) || n.includes(normalizedKeyword) ||
-                           normalizedKeyword.includes(s) || s.includes(normalizedKeyword)
+                    const n = normalize(p.name), s = normalize(p.slug)
+                    return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
                   })
                   if (matched?.rakutenUrl) {
                     const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
@@ -247,7 +249,7 @@ export default async function ArticlePage({ params }: Props) {
             },
           }}
         >
-          {article.content}
+          {injectProductCardMarkers(article.content, products)}
         </ReactMarkdown>
       </article>
 
