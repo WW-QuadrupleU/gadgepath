@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import type { Product } from '@/lib/notion'
+import { formatPrice } from '@/lib/notion'
 
 const MOSHIMO_A_ID = '5519982'
 
@@ -47,7 +48,7 @@ export default function ProductCard({ product }: Props) {
           {product.name}
         </p>
         {product.price && (
-          <p className="text-xs text-gray-500 mt-1">{product.price}</p>
+          <p className="text-xs text-gray-500 mt-1">{formatPrice(product.price)}</p>
         )}
         {product.rakutenUrl && (
           <div className="mt-2">

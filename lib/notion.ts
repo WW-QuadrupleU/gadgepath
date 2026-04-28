@@ -121,6 +121,19 @@ export async function getProductsByArticleSlug(articleSlug: string): Promise<Pro
 }
 
 // ────────────────────────────────────────
+// 価格の表示整形：数字のみ入力 → "2,500円" に変換
+// すでに「約」「円」「〜」などが含まれる場合はそのまま返す
+export function formatPrice(raw: string): string {
+  if (!raw) return ''
+  const stripped = raw.replace(/[,，\s円]/g, '')
+  const num = Number(stripped)
+  if (!isNaN(num) && stripped !== '') {
+    return num.toLocaleString('ja-JP') + '円'
+  }
+  return raw
+}
+
+// ────────────────────────────────────────
 export const CATEGORIES = [
   { name: 'マイク', slug: 'mic', emoji: '🎙️', icon: '/icons/mic.png' },
   { name: 'カメラ', slug: 'camera', emoji: '📷', icon: '/icons/camera.png' },

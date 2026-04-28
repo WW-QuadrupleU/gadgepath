@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug } from '@/lib/notion'
+import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug, formatPrice } from '@/lib/notion'
 import type { Product } from '@/lib/notion'
 import ProductCard from '@/components/ProductCard'
 import ReactMarkdown from 'react-markdown'
@@ -68,7 +68,7 @@ function InlineProductCard({ product, affiliateUrl }: { product: Product; affili
       </div>
       <div className="flex flex-col justify-between flex-1 min-w-0">
         <p className="text-sm font-semibold text-brand-text leading-snug line-clamp-2">{product.name}</p>
-        {product.price && <p className="text-xs text-gray-500 mt-1">{product.price}</p>}
+        {product.price && <p className="text-xs text-gray-500 mt-1">{formatPrice(product.price)}</p>}
         <div className="mt-2">
           <a
             href={affiliateUrl}
