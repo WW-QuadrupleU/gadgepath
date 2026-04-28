@@ -4,6 +4,7 @@ import { getArticleBySlug, getAllSlugs } from '@/lib/notion'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export const revalidate = 3600
 
@@ -20,10 +21,13 @@ export async function generateStaticParams() {
   }
 }
 
+const BASE_URL = 'https://gadgepath.com'
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const article = await getArticleBySlug(slug)
   if (!article) return {}
+  const ogImage = `${BASE_URL}/images/articles/${slug}.jpg`
   return {
     title: article.title,
     description: article.metaDescription || undefined,
@@ -32,6 +36,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: article.metaDescription || undefined,
       type: 'article',
       publishedTime: article.publishedDate || undefined,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: article.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.metaDescription || undefined,
+      images: [ogImage],
     },
   }
 }
@@ -76,6 +87,18 @@ export default async function ArticlePage({ params }: Props) {
           {article.lastEdited && (
             <span>更新: {new Date(article.lastEdited).toLocaleDateString('ja-JP')}</span>
           )}
+        </div>
+
+        {/* Hero image */}
+        <div className="relative w-full h-52 sm:h-72 mt-6 rounded-xl overflow-hidden bg-gray-100">
+          <Image
+            src={`/images/articles/${article.slug}.jpg`}
+            alt={article.title}
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover"
+          />
         </div>
       </header>
 

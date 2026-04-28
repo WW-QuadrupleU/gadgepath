@@ -31,13 +31,16 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="font-bold text-base text-brand-text mb-2">アクセス解析ツールについて</h2>
-          <p>当サイトはGoogleアナリティクス等のアクセス解析ツールを使用する場合があります。これらのツールはCookieを使用してデータを収集しますが、個人を特定する情報は含まれません。Cookieの使用を拒否するには、ブラウザの設定でCookieを無効にしてください。</p>
+          <p>当サイトはGoogle Inc.が提供するアクセス解析ツール「Googleアナリティクス（Google Analytics 4）」を使用しています。このツールはCookieを使用してデータを収集しますが、個人を特定する情報は含まれません。収集したデータはサイト改善のために使用します。</p>
+          <p className="mt-2">Googleアナリティクスによるデータ収集を無効にするには、<a href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener noreferrer" className="text-brand-green underline hover:opacity-80">Googleアナリティクス オプトアウトアドオン</a>をブラウザにインストールしてください。</p>
           <p className="mt-2">Googleによるデータの収集・処理の詳細については、<a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-brand-green underline hover:opacity-80">Googleのプライバシーポリシー</a>をご確認ください。</p>
         </section>
 
         <section>
           <h2 className="font-bold text-base text-brand-text mb-2">広告の配信について</h2>
-          <p>当サイトは、第三者配信の広告サービスを利用する場合があります。広告配信事業者はCookieを使用してユーザーの興味に応じた広告を表示することがあります。Cookieを無効にする方法や詳細については、各広告配信事業者のウェブサイトをご参照ください。</p>
+          <p>当サイトは、Google Inc.が提供する広告配信サービス「Google AdSense（グーグルアドセンス）」を利用しています。Google AdSenseはCookieを使用して、ユーザーがこのサイトや他のサイトに以前アクセスした際の情報に基づいて広告を配信します。</p>
+          <p className="mt-2">Googleによる広告のCookieを使用しないようにするには、<a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-brand-green underline hover:opacity-80">Googleの広告設定ページ</a>にアクセスしてオプトアウトしてください。また、<a href="https://www.aboutads.info/choices/" target="_blank" rel="noopener noreferrer" className="text-brand-green underline hover:opacity-80">www.aboutads.info</a>にアクセスすることで、第三者配信事業者のCookieを使用しないようにすることができます。</p>
+          <p className="mt-2">詳細はGoogleの<a href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener noreferrer" className="text-brand-green underline hover:opacity-80">広告に関するポリシー</a>をご確認ください。</p>
         </section>
 
         <section>
