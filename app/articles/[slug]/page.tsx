@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug } from '@/lib/notion'
-import type { Product } from '@/lib/notion'
 import ProductCard from '@/components/ProductCard'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -47,42 +46,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: [ogImage],
     },
   }
-}
-
-// 記事本文中に埋め込む商品カード（画像付き）
-function InlineProductCard({ product, affiliateUrl }: { product: Product; affiliateUrl: string }) {
-  return (
-    <span className="not-prose my-4 flex gap-3 bg-white border border-gray-200 rounded-xl p-3 hover:border-brand-green hover:shadow-sm transition-all duration-200" style={{ display: 'flex' }}>
-      {product.imageUrl && (
-        <span className="relative flex-shrink-0" style={{ width: 80, height: 80, display: 'block', position: 'relative' }}>
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            sizes="80px"
-            className="object-contain rounded-lg bg-gray-50 p-1"
-            unoptimized
-          />
-        </span>
-      )}
-      <span className="flex flex-col justify-between flex-1 min-w-0" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        <span className="text-sm font-semibold text-brand-text leading-snug line-clamp-2">{product.name}</span>
-        {product.price && (
-          <span className="text-xs text-gray-500 mt-1">{product.price}</span>
-        )}
-        <span className="mt-2" style={{ display: 'block' }}>
-          <a
-            href={affiliateUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="inline-block text-xs font-bold text-white bg-[#BF0000] hover:opacity-90 transition-opacity px-4 py-1.5 rounded-full"
-          >
-            楽天市場で見る
-          </a>
-        </span>
-      </span>
-    </span>
-  )
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -180,25 +143,21 @@ export default async function ArticlePage({ params }: Props) {
                   })
 
                   if (matched?.rakutenUrl) {
-                    // 直リンクをアフィリエイト経由に変換
+                    // 直リンクをアフィリエイト経由に変換（商品名テキストを維持）
                     const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
-                    // 画像があればインライン商品カードを表示
-                    if (matched.imageUrl) {
-                      return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
-                    }
                     return (
-                      <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
-                        楽天市場で見る
+                      <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">
+                        {children}
                       </a>
                     )
                   }
 
-                  // 未登録の場合は楽天検索にフォールバック
+                  // 未登録の場合は楽天検索にフォールバック（商品名テキストを維持）
                   const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
                   const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(rakutenUrl)}`
                   return (
-                    <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">
-                      楽天市場で見る
+                    <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">
+                      {children}
                     </a>
                   )
                 } catch {
@@ -243,14 +202,14 @@ export default async function ArticlePage({ params }: Props) {
         </ReactMarkdown>
       </article>
 
-      {/* 商品一覧（楽天URLが入力済みの商品のみ表示） */}
-      {products.filter(p => p.rakutenUrl).length > 0 && (
+      {/* 商品一覧（全商品を表示・楽天URLなしはボタン非表示） */}
+      {products.length > 0 && (
         <section className="mt-12 pt-8 border-t border-gray-200">
           <h2 className="text-base font-bold text-brand-text mb-4">
             この記事で紹介した商品
           </h2>
           <div className="space-y-3">
-            {products.filter(p => p.rakutenUrl).map((product) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

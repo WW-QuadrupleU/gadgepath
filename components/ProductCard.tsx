@@ -49,16 +49,18 @@ export default function ProductCard({ product }: Props) {
         {product.price && (
           <p className="text-xs text-gray-500 mt-1">{product.price}</p>
         )}
-        <div className="mt-2">
-          <a
-            href={affiliateUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="inline-block text-xs font-bold text-white bg-[#BF0000] hover:opacity-90 transition-opacity px-4 py-1.5 rounded-full"
-          >
-            楽天市場で見る
-          </a>
-        </div>
+        {product.rakutenUrl && (
+          <div className="mt-2">
+            <a
+              href={affiliateUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="inline-block text-xs font-bold text-white bg-[#BF0000] hover:opacity-90 transition-opacity px-4 py-1.5 rounded-full"
+            >
+              楽天市場で見る
+            </a>
+          </div>
+        )}
       </div>
     </div>
   )
