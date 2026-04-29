@@ -1,6 +1,51 @@
 'use client'
 import { useEffect, useRef } from 'react'
 
+interface Point { x: number; y: number }
+
+// 左端から右端まで横断するパスを1本生成
+// 水平に進みながら、途中で垂直にジョグする（回路トレース風）
+function makePath(w: number, h: number): Point[] {
+  const pts: Point[] = []
+  let x = 0
+  let y = 40 + Math.random() * (h - 80)
+  pts.push({ x, y })
+
+  while (x < w) {
+    // 水平セグメント
+    x = Math.min(w, x + 100 + Math.random() * 200)
+    pts.push({ x, y })
+
+    // 途中でランダムに垂直ジョグ（折れ曲がり）
+    if (x < w && Math.random() > 0.45) {
+      const jog = (Math.random() - 0.5) * 220
+      y = Math.max(30, Math.min(h - 30, y + jog))
+      pts.push({ x, y })
+    }
+  }
+  return pts
+}
+
+// 上端から下端まで縦断するパスを1本生成
+function makeVerticalPath(w: number, h: number): Point[] {
+  const pts: Point[] = []
+  let x = 40 + Math.random() * (w - 80)
+  let y = 0
+  pts.push({ x, y })
+
+  while (y < h) {
+    y = Math.min(h, y + 120 + Math.random() * 200)
+    pts.push({ x, y })
+
+    if (y < h && Math.random() > 0.5) {
+      const jog = (Math.random() - 0.5) * 200
+      x = Math.max(30, Math.min(w - 30, x + jog))
+      pts.push({ x, y })
+    }
+  }
+  return pts
+}
+
 export default function NetworkBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
@@ -15,80 +60,36 @@ export default function NetworkBackground() {
       const h = (canvas.height = document.body.scrollHeight)
       ctx.clearRect(0, 0, w, h)
 
-      // グリッド間隔・ノードのズレ幅
-      const spacing = 150
-      const jitter = 35
-      const cols = Math.ceil(w / spacing) + 1
-      const rows = Math.ceil(h / spacing) + 1
+      // 横断パス 5〜7本、縦断パス 2〜3本
+      const hPaths = Array.from({ length: 5 + Math.floor(Math.random() * 3) }, () => makePath(w, h))
+      const vPaths = Array.from({ length: 2 + Math.floor(Math.random() * 2) }, () => makeVerticalPath(w, h))
+      const allPaths = [...hPaths, ...vPaths]
 
-      // ノード生成（グリッドをベースにランダムにズラす）
-      const nodes: { x: number; y: number }[][] = []
-      for (let r = 0; r < rows; r++) {
-        nodes[r] = []
-        for (let c = 0; c < cols; c++) {
-          nodes[r][c] = {
-            x: Math.max(0, Math.min(w, c * spacing + (Math.random() - 0.5) * jitter * 2)),
-            y: Math.max(0, Math.min(h, r * spacing + (Math.random() - 0.5) * jitter * 2)),
-          }
-        }
-      }
+      allPaths.forEach(pts => {
+        // ライン
+        ctx.beginPath()
+        ctx.moveTo(pts[0].x, pts[0].y)
+        pts.slice(1).forEach(p => ctx.lineTo(p.x, p.y))
+        ctx.strokeStyle = 'rgba(132, 204, 22, 0.14)'
+        ctx.lineWidth = 1
+        ctx.stroke()
 
-      // ラインを描画（端から端まで続く接続）
-      ctx.lineWidth = 1
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const a = nodes[r][c]
-
-          // 横方向（高確率でつなぐ → 画面を横断する流れを作る）
-          if (c < cols - 1 && Math.random() > 0.15) {
-            const b = nodes[r][c + 1]
-            ctx.beginPath()
-            ctx.moveTo(a.x, a.y)
-            ctx.lineTo(b.x, b.y)
-            ctx.strokeStyle = 'rgba(132, 204, 22, 0.13)'
-            ctx.stroke()
-          }
-
-          // 縦方向（やや間引く）
-          if (r < rows - 1 && Math.random() > 0.3) {
-            const b = nodes[r + 1][c]
-            ctx.beginPath()
-            ctx.moveTo(a.x, a.y)
-            ctx.lineTo(b.x, b.y)
-            ctx.strokeStyle = 'rgba(132, 204, 22, 0.10)'
-            ctx.stroke()
-          }
-
-          // 斜め方向（まばらに入れてルート感を出す）
-          if (r < rows - 1 && c < cols - 1 && Math.random() > 0.78) {
-            const b = nodes[r + 1][c + 1]
-            ctx.beginPath()
-            ctx.moveTo(a.x, a.y)
-            ctx.lineTo(b.x, b.y)
-            ctx.strokeStyle = 'rgba(132, 204, 22, 0.08)'
-            ctx.stroke()
-          }
-        }
-      }
-
-      // ノード（小さいドット）を描画
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const { x, y } = nodes[r][c]
+        // 折れ曲がり地点（中間ノード）に小さいドット
+        pts.forEach((p, i) => {
+          const isEndpoint = i === 0 || i === pts.length - 1
           ctx.beginPath()
-          ctx.arc(x, y, 1.8, 0, Math.PI * 2)
-          ctx.fillStyle = 'rgba(132, 204, 22, 0.38)'
+          ctx.arc(p.x, p.y, isEndpoint ? 1.5 : 2.5, 0, Math.PI * 2)
+          ctx.fillStyle = isEndpoint
+            ? 'rgba(132, 204, 22, 0.25)'
+            : 'rgba(132, 204, 22, 0.45)'
           ctx.fill()
-        }
-      }
+        })
+      })
     }
 
     draw()
-
-    const handleResize = () => draw()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+    window.addEventListener('resize', draw)
+    return () => window.removeEventListener('resize', draw)
   }, [])
 
   return (
