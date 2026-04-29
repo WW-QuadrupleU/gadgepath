@@ -13,13 +13,8 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative bg-brand-dark text-white py-12 px-4 overflow-hidden">
-        {/* Pattern D: green glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 130%, rgba(132,204,22,0.22) 0%, transparent 70%)' }}
-        />
-        <div className="relative max-w-5xl mx-auto text-center">
+      <section className="bg-brand-dark text-white py-12 px-4">
+        <div className="max-w-5xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-snug">
             クリエイター・在宅ワーカーのための<br className="hidden sm:block" />
             <span className="text-brand-green">ガジェット比較</span>サイト
