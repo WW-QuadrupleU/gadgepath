@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { CATEGORIES } from '@/lib/notion'
 
 export default function Header() {
   return (
@@ -22,22 +21,6 @@ export default function Header() {
               記事一覧
             </Link>
           </nav>
-        </div>
-      </div>
-      <div className="border-t border-gray-700">
-        <div className="max-w-5xl mx-auto px-4">
-          <div className="flex gap-4 overflow-x-auto py-2 text-xs text-gray-300 scrollbar-hide">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/articles?category=${cat.slug}`}
-                className="flex items-center gap-1.5 whitespace-nowrap hover:text-brand-green transition-colors"
-              >
-                <Image src={cat.icon} alt={cat.name} width={16} height={16} className="opacity-80" />
-                <span>{cat.name}</span>
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </header>
