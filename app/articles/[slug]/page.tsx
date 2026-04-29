@@ -169,7 +169,7 @@ export default async function ArticlePage({ params }: Props) {
               }
               if (text?.startsWith('!!GADGE_CARD_URL!!:')) {
                 try {
-                  const urlText = text.slice('!!GADGE_CARD_URL!!:'.length)
+                  const urlText = decodeURIComponent(text.slice('!!GADGE_CARD_URL!!:'.length))
                   const url = new URL(urlText)
                   const keyword = url.searchParams.get('k') || ''
                   const matched = findProductByKeyword(keyword, products)

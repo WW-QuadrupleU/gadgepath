@@ -56,7 +56,7 @@ export function preprocessContent(content: string, products: Product[]): string 
     if (insertCard) {
       cardInsertedFor.add(matchedName)
       result.push('')
-      result.push(`!!GADGE_CARD_URL!!:${urlMatch[1]}`)
+      result.push(`!!GADGE_CARD_URL!!:${encodeURIComponent(urlMatch[1])}`)
       result.push('')
     }
   }
