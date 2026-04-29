@@ -15,40 +15,73 @@ export default function NetworkBackground() {
       const h = (canvas.height = document.body.scrollHeight)
       ctx.clearRect(0, 0, w, h)
 
-      // ドット密度：画面の広さに応じて自動調整
-      const count = Math.min(Math.floor((w * h) / 18000), 120)
-      const dots: { x: number; y: number }[] = Array.from({ length: count }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-      }))
+      // グリッド間隔・ノードのズレ幅
+      const spacing = 150
+      const jitter = 35
+      const cols = Math.ceil(w / spacing) + 1
+      const rows = Math.ceil(h / spacing) + 1
 
-      const maxDist = 180
+      // ノード生成（グリッドをベースにランダムにズラす）
+      const nodes: { x: number; y: number }[][] = []
+      for (let r = 0; r < rows; r++) {
+        nodes[r] = []
+        for (let c = 0; c < cols; c++) {
+          nodes[r][c] = {
+            x: Math.max(0, Math.min(w, c * spacing + (Math.random() - 0.5) * jitter * 2)),
+            y: Math.max(0, Math.min(h, r * spacing + (Math.random() - 0.5) * jitter * 2)),
+          }
+        }
+      }
 
-      // 線を描画（近いドット同士をつなぐ）
-      for (let i = 0; i < dots.length; i++) {
-        for (let j = i + 1; j < dots.length; j++) {
-          const dx = dots[i].x - dots[j].x
-          const dy = dots[i].y - dots[j].y
-          const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < maxDist) {
-            const alpha = (1 - dist / maxDist) * 0.18
+      // ラインを描画（端から端まで続く接続）
+      ctx.lineWidth = 1
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const a = nodes[r][c]
+
+          // 横方向（高確率でつなぐ → 画面を横断する流れを作る）
+          if (c < cols - 1 && Math.random() > 0.15) {
+            const b = nodes[r][c + 1]
             ctx.beginPath()
-            ctx.moveTo(dots[i].x, dots[i].y)
-            ctx.lineTo(dots[j].x, dots[j].y)
-            ctx.strokeStyle = `rgba(132, 204, 22, ${alpha})`
-            ctx.lineWidth = 1
+            ctx.moveTo(a.x, a.y)
+            ctx.lineTo(b.x, b.y)
+            ctx.strokeStyle = 'rgba(132, 204, 22, 0.13)'
+            ctx.stroke()
+          }
+
+          // 縦方向（やや間引く）
+          if (r < rows - 1 && Math.random() > 0.3) {
+            const b = nodes[r + 1][c]
+            ctx.beginPath()
+            ctx.moveTo(a.x, a.y)
+            ctx.lineTo(b.x, b.y)
+            ctx.strokeStyle = 'rgba(132, 204, 22, 0.10)'
+            ctx.stroke()
+          }
+
+          // 斜め方向（まばらに入れてルート感を出す）
+          if (r < rows - 1 && c < cols - 1 && Math.random() > 0.78) {
+            const b = nodes[r + 1][c + 1]
+            ctx.beginPath()
+            ctx.moveTo(a.x, a.y)
+            ctx.lineTo(b.x, b.y)
+            ctx.strokeStyle = 'rgba(132, 204, 22, 0.08)'
             ctx.stroke()
           }
         }
       }
 
-      // ドットを描画
-      dots.forEach((dot) => {
-        ctx.beginPath()
-        ctx.arc(dot.x, dot.y, 2.5, 0, Math.PI * 2)
-        ctx.fillStyle = 'rgba(132, 204, 22, 0.35)'
-        ctx.fill()
-      })
+      // ノード（小さいドット）を描画
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const { x, y } = nodes[r][c]
+          ctx.beginPath()
+          ctx.arc(x, y, 1.8, 0, Math.PI * 2)
+          ctx.fillStyle = 'rgba(132, 204, 22, 0.38)'
+          ctx.fill()
+        }
+      }
     }
 
     draw()
