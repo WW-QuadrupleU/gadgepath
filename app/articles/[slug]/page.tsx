@@ -340,6 +340,5 @@ export default async function ArticlePage({ params }: Props) {
         </Link>
       </div>
     </div>
-    </div>
   )
 }
