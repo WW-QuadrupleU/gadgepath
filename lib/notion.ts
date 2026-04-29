@@ -1,7 +1,37 @@
 import { Client } from '@notionhq/client'
 import { NotionToMarkdown } from 'notion-to-md'
 
-const notion = new Client({ auth: process.env.NOTION_TOKEN })
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+
+async function fetchWithRetry(url: string | URL | Request, init?: RequestInit): Promise<Response> {
+  let retries = 0;
+  while (true) {
+    try {
+      const response = await fetch(url, init);
+      if (response.status >= 500 && response.status <= 599 && retries < MAX_RETRIES) {
+        retries++;
+        console.warn(`Notion API returned ${response.status}, retrying (${retries}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * retries));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      if (retries < MAX_RETRIES) {
+        retries++;
+        console.warn(`Notion API fetch failed, retrying (${retries}/${MAX_RETRIES})...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * retries));
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+const notion = new Client({ 
+  auth: process.env.NOTION_TOKEN,
+  fetch: fetchWithRetry as any
+})
 const n2m = new NotionToMarkdown({ notionClient: notion })
 
 const ARTICLES_DB = process.env.NOTION_ARTICLES_DB_ID!
