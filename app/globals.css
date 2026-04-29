@@ -9,7 +9,11 @@
     font-family: 'Noto Sans JP', sans-serif;
   }
   body {
-    @apply bg-brand-bg text-brand-text;
+    @apply text-brand-text;
+    background-color: #F7FAFC;
+    /* Pattern A: dot grid */
+    background-image: radial-gradient(circle, #C4CDD6 1.5px, transparent 1.5px);
+    background-size: 28px 28px;
   }
 }
 
