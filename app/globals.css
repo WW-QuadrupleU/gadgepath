@@ -48,14 +48,14 @@
 .article-content strong {
   @apply font-bold text-brand-text;
 }
-.article-content a {
+.article-content a:not(.btn-rakuten):not(.btn-amazon) {
   @apply text-brand-green underline hover:opacity-80;
 }
 .article-content a.btn-amazon {
-  @apply no-underline inline-flex items-center gap-2 bg-[#FF9900] text-white font-bold text-sm px-5 py-2.5 rounded-lg hover:opacity-90 transition-opacity;
+  @apply no-underline inline-flex items-center gap-2 bg-[#FF9900] text-white hover:text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm hover:bg-[#e08800] transition-all duration-150;
 }
 .article-content a.btn-rakuten {
-  @apply no-underline inline-flex items-center gap-2 bg-[#BF0000] hover:bg-[#a30000] text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm transition-all duration-150;
+  @apply no-underline inline-flex items-center gap-2 bg-[#BF0000] text-white hover:text-white font-bold text-sm px-5 py-2.5 rounded-xl shadow-sm hover:bg-[#a30000] transition-all duration-150;
 }
 .article-content .buy-buttons {
   @apply flex flex-wrap gap-3 my-6;

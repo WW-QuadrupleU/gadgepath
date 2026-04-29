@@ -58,7 +58,7 @@ export default function ProductCard({ product }: Props) {
               rel="noopener noreferrer nofollow"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#BF0000] hover:bg-[#a30000] transition-all duration-150 px-4 py-2 rounded-xl shadow-sm"
             >
-              🛒 楽天市場で見る
+              楽天市場で見る
             </a>
           </div>
         )}
