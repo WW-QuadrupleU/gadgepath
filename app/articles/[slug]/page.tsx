@@ -1,91 +1,16 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug, formatPrice } from '@/lib/notion'
+import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug } from '@/lib/notion'
 import type { Product } from '@/lib/notion'
+import { BASE_URL, MOSHIMO_BASE } from '@/lib/constants'
+import { buildAffiliateUrl } from '@/lib/affiliate'
+import { normalize, preprocessContent } from '@/lib/article-preprocessor'
 import ProductCard from '@/components/ProductCard'
+import InlineProductCard from '@/components/InlineProductCard'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
 import Image from 'next/image'
-
-const MOSHIMO_BASE = 'https://af.moshimo.com/af/c/click?a_id=5519982&p_id=54&pc_id=54&pl_id=27059&url='
-const normalize = (s: string) => s.toLowerCase().replace(/[\s\-_+・（）()【】「」『』]/g, '')
-
-// 記事Markdownを前処理：Amazon検索URLを含む全行を走査し
-// ① 実売価格テキストを商品DBの実価格に置換
-// ② 画像URLあり商品は直後にカードマーカー挿入
-// ③ 価格帯セクション違いの商品を適切なセクションに移動
-function preprocessContent(content: string, products: import('@/lib/notion').Product[]): string {
-  const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  const lines = normalized.split('\n')
-  const result: string[] = []
-
-  for (const line of lines) {
-    const urlMatch = line.match(/\]\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]+)\)/)
-    if (!urlMatch) {
-      result.push(line)
-      continue
-    }
-
-    let processedLine = line
-    let insertCard = false
-
-    try {
-      const url = new URL(urlMatch[1])
-      const keyword = url.searchParams.get('k') || ''
-      const nk = normalize(keyword)
-      const matched = products.find(p => {
-        const n = normalize(p.name), s = normalize(p.slug)
-        return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-      })
-
-      if (matched) {
-        if (matched.price) {
-          const actual = formatPrice(matched.price)
-          processedLine = processedLine.replace(/実売価格[：:].*$/, `実売価格：${actual}`)
-        }
-        if (matched.rakutenUrl && matched.imageUrl) insertCard = true
-      }
-    } catch {}
-
-    result.push(processedLine)
-    if (insertCard) {
-      result.push('')
-      result.push(`[!!GADGE_CARD!!](${urlMatch[1]})`)
-      result.push('')
-    }
-  }
-
-  return reorderSections(result.join('\n'))
-}
-
-// --- で区切られたセクションを価格順に並び替え
-// Zone Vibe 100（18,000円）を〜1.5万円セクションから1.5〜3.5万円セクションへ移動
-function reorderSections(content: string): string {
-  // --- 区切りで分割（前後の空行も含めて吸収）
-  const parts = content.split(/\n{1,3}---\n{1,3}/)
-
-  const zvbIdx   = parts.findIndex(p => /Zone.?Vibe.?100/i.test(p))
-  const razerIdx = parts.findIndex(p => /Razer.?BlackShark/i.test(p))
-
-  // Zone Vibe 100 が Razer より前にある場合のみ移動
-  if (zvbIdx === -1 || razerIdx === -1 || zvbIdx >= razerIdx) return content
-
-  const [zvbPart] = parts.splice(zvbIdx, 1)
-  const newRazerIdx = parts.findIndex(p => /Razer.?BlackShark/i.test(p))
-  parts.splice(newRazerIdx + 1, 0, zvbPart)
-
-  // 番号を更新：Razer 5→4、Zone Vibe 100 4→5
-  return parts
-    .map(part => {
-      if (/Razer.?BlackShark/i.test(part))
-        return part.replace(/^(#{1,4} )\d+\. /m, '$14. ')
-      if (/Zone.?Vibe.?100/i.test(part))
-        return part.replace(/^(#{1,4} )\d+\. /m, '$15. ')
-      return part
-    })
-    .join('\n\n---\n\n')
-}
 
 export const revalidate = 3600
 
@@ -101,8 +26,6 @@ export async function generateStaticParams() {
     return []
   }
 }
-
-const BASE_URL = 'https://gadgepath.com'
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -128,36 +51,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-// 記事本文中・見出し直後に表示する商品カード（画像付き）
-function InlineProductCard({ product, affiliateUrl }: { product: Product; affiliateUrl: string }) {
-  return (
-    <div data-product-card="true" className="not-prose my-3 flex gap-3 bg-white border border-gray-200 rounded-xl p-3 hover:border-brand-green hover:shadow-sm transition-all duration-200">
-      <div className="relative flex-shrink-0 w-20 h-20 bg-gray-50 rounded-lg overflow-hidden">
-        <Image
-          src={product.imageUrl}
-          alt={product.name}
-          fill
-          sizes="80px"
-          className="object-contain p-1"
-          unoptimized
-        />
-      </div>
-      <div className="flex flex-col justify-between flex-1 min-w-0">
-        <p className="text-base font-bold text-brand-text leading-snug line-clamp-2">{product.name}</p>
-        {product.price && <p className="text-xs text-gray-500 mt-1">{formatPrice(product.price)}</p>}
-        <div className="mt-2">
-          <a
-            href={affiliateUrl}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="btn-rakuten inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#BF0000] hover:bg-[#a30000] transition-all duration-150 px-4 py-2 rounded-xl shadow-sm"
-          >
-            楽天市場で見る
-          </a>
-        </div>
-      </div>
-    </div>
-  )
+/**
+ * Amazon検索URLのキーワードから商品DBの商品をマッチングする
+ */
+function findProductByKeyword(keyword: string, products: Product[]): Product | undefined {
+  const nk = normalize(keyword)
+  return products.find(p => {
+    const n = normalize(p.name), s = normalize(p.slug)
+    return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+  })
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -167,6 +69,12 @@ export default async function ArticlePage({ params }: Props) {
     getProductsByArticleSlug(slug),
   ])
   if (!article) notFound()
+
+  // 更新日は公開日より後の場合のみ表示
+  const showLastEdited =
+    article.lastEdited &&
+    article.publishedDate &&
+    new Date(article.lastEdited).getTime() > new Date(article.publishedDate).getTime()
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 bg-[#F7FAFC]">
@@ -200,7 +108,7 @@ export default async function ArticlePage({ params }: Props) {
           {article.publishedDate && (
             <span>公開: {new Date(article.publishedDate).toLocaleDateString('ja-JP')}</span>
           )}
-          {article.lastEdited && (
+          {showLastEdited && (
             <span>更新: {new Date(article.lastEdited).toLocaleDateString('ja-JP')}</span>
           )}
         </div>
@@ -233,6 +141,8 @@ export default async function ArticlePage({ params }: Props) {
             // 商品カードが入った <p> は <p> を取り除いてそのまま返す（div-in-p の無効HTML回避）
             p: ({ children }) => {
               const arr = Array.isArray(children) ? children : [children]
+
+              // ① 直接 data-product-card を持つ子（!!GADGE_CARD!! Amazon URL 経由）
               if (
                 arr.length === 1 &&
                 typeof arr[0] === 'object' &&
@@ -242,6 +152,22 @@ export default async function ArticlePage({ params }: Props) {
               ) {
                 return <>{arr[0]}</>
               }
+
+              // ② プレーンテキストマーカー「!!GADGE_CARD_NAME!!:EncodedName」を検出
+              const text = arr.length === 1 && typeof arr[0] === 'string' ? arr[0] : null
+              if (text?.startsWith('!!GADGE_CARD_NAME!!:')) {
+                try {
+                  const encoded = text.slice('!!GADGE_CARD_NAME!!:'.length)
+                  const productName = decodeURIComponent(encoded)
+                  const matched = products.find(p => p.name === productName)
+                  if (matched?.rakutenUrl && matched?.imageUrl) {
+                    const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
+                    return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
+                  }
+                } catch {}
+                return null
+              }
+
               return <p>{children}</p>
             },
 
@@ -261,13 +187,9 @@ export default async function ArticlePage({ params }: Props) {
                 try {
                   const url = new URL(href)
                   const keyword = url.searchParams.get('k') || ''
-                  const nk = normalize(keyword)
-                  const matched = products.find(p => {
-                    const n = normalize(p.name), s = normalize(p.slug)
-                    return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-                  })
+                  const matched = findProductByKeyword(keyword, products)
                   if (matched?.rakutenUrl && matched?.imageUrl) {
-                    const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
+                    const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
                     return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
                   }
                 } catch {}
@@ -279,18 +201,14 @@ export default async function ArticlePage({ params }: Props) {
                 try {
                   const url = new URL(href)
                   const keyword = url.searchParams.get('k') || ''
-                  const nk = normalize(keyword)
-                  const matched = products.find(p => {
-                    const n = normalize(p.name), s = normalize(p.slug)
-                    return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-                  })
+                  const matched = findProductByKeyword(keyword, products)
                   if (matched?.rakutenUrl) {
-                    const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(matched.rakutenUrl)}`
+                    const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
                     return <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">{children}</a>
                   }
                   // 未登録の場合は楽天検索にフォールバック
                   const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
-                  const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(rakutenUrl)}`
+                  const affiliateUrl = buildAffiliateUrl(rakutenUrl)
                   return <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">{children}</a>
                 } catch {}
               }
@@ -298,11 +216,7 @@ export default async function ArticlePage({ params }: Props) {
               // 楽天URLを全てもしもアフィリエイト経由に変換（他社パラメータも除去）
               if (isRakutenDirect && href) {
                 try {
-                  const url = new URL(href)
-                  url.searchParams.delete('scid')
-                  url.searchParams.delete('sc2id')
-                  const cleanUrl = url.toString()
-                  const affiliateUrl = `${MOSHIMO_BASE}${encodeURIComponent(cleanUrl)}`
+                  const affiliateUrl = buildAffiliateUrl(href)
                   return <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">{children}</a>
                 } catch {}
               }

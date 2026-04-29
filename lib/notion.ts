@@ -5,7 +5,7 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const n2m = new NotionToMarkdown({ notionClient: notion })
 
 const ARTICLES_DB = process.env.NOTION_ARTICLES_DB_ID!
-const PRODUCTS_DB = 'c0f456c33c5740bc8d90025630236014'
+const PRODUCTS_DB = process.env.NOTION_PRODUCTS_DB_ID || 'c0f456c33c5740bc8d90025630236014'
 
 export type Article = {
   id: string
