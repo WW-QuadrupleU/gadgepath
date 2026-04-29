@@ -153,13 +153,26 @@ export default async function ArticlePage({ params }: Props) {
                 return <>{arr[0]}</>
               }
 
-              // ② プレーンテキストマーカー「!!GADGE_CARD_NAME!!:EncodedName」を検出
+              // ② プレーンテキストマーカー「!!GADGE_CARD_NAME!!:EncodedName」または「!!GADGE_CARD_URL!!:Url」を検出
               const text = arr.length === 1 && typeof arr[0] === 'string' ? arr[0] : null
               if (text?.startsWith('!!GADGE_CARD_NAME!!:')) {
                 try {
                   const encoded = text.slice('!!GADGE_CARD_NAME!!:'.length)
                   const productName = decodeURIComponent(encoded)
                   const matched = products.find(p => p.name === productName)
+                  if (matched?.rakutenUrl && matched?.imageUrl) {
+                    const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
+                    return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
+                  }
+                } catch {}
+                return null
+              }
+              if (text?.startsWith('!!GADGE_CARD_URL!!:')) {
+                try {
+                  const urlText = text.slice('!!GADGE_CARD_URL!!:'.length)
+                  const url = new URL(urlText)
+                  const keyword = url.searchParams.get('k') || ''
+                  const matched = findProductByKeyword(keyword, products)
                   if (matched?.rakutenUrl && matched?.imageUrl) {
                     const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
                     return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
@@ -177,24 +190,6 @@ export default async function ArticlePage({ params }: Props) {
               const isAmazon = href && (href.includes('amazon.co.jp') || href.includes('amzn.to') || href.includes('amzn.asia'))
               const isRakutenDirect = href && href.includes('rakuten.co.jp') && !href.includes('af.moshimo.com')
               const isMoshimo = href && href.includes('moshimo')
-
-              // 商品カードマーカーの検出 → InlineProductCard を返す
-              const childText = Array.isArray(children)
-                ? children.map((c) => (typeof c === 'string' ? c : '')).join('')
-                : typeof children === 'string' ? children : ''
-
-              if (childText === '!!GADGE_CARD!!' && isAmazonSearch && href) {
-                try {
-                  const url = new URL(href)
-                  const keyword = url.searchParams.get('k') || ''
-                  const matched = findProductByKeyword(keyword, products)
-                  if (matched?.rakutenUrl && matched?.imageUrl) {
-                    const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
-                    return <InlineProductCard product={matched} affiliateUrl={affiliateUrl} />
-                  }
-                } catch {}
-                return null
-              }
 
               // Amazon検索URL → 商品名テキストを維持したまま楽天アフィリエイトリンクに変換
               if (isAmazonSearch && href) {

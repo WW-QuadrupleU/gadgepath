@@ -56,7 +56,7 @@ export function preprocessContent(content: string, products: Product[]): string 
     if (insertCard) {
       cardInsertedFor.add(matchedName)
       result.push('')
-      result.push(`[!!GADGE_CARD!!](${urlMatch[1]})`)
+      result.push(`!!GADGE_CARD_URL!!:${urlMatch[1]}`)
       result.push('')
     }
   }
@@ -70,8 +70,8 @@ export function preprocessContent(content: string, products: Product[]): string 
   for (let i = 0; i < result.length; i++) {
     const line = result[i]
 
-    // 現在行が番号付きリスト項目かチェック
-    const listMatch = line.match(/^\d+\.\s+(.+?)(?:[｜|]|$)/)
+    // 現在行が番号付きリスト項目または見出し番号付きかチェック
+    const listMatch = line.match(/^(?:#+\s*)?\d+\.\s+([^\[｜|]+)/)
     if (listMatch) {
       const itemText = listMatch[1].trim()
       const tokens = itemText.split(/\s*[/／]\s*/)
