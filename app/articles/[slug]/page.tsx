@@ -214,6 +214,7 @@ export default async function ArticlePage({ params }: Props) {
             priority
             sizes="(max-width: 768px) 100vw, 768px"
             className="object-cover"
+            unoptimized
           />
         </div>
       </header>
