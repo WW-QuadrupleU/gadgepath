@@ -3,7 +3,6 @@ import Script from 'next/script'
 import './globals.css'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import NetworkBackground from '@/components/NetworkBackground'
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
@@ -31,8 +30,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body className="relative min-h-screen flex flex-col">
-        <NetworkBackground />
+      <body className="min-h-screen flex flex-col">
         {GA_ID && (
           <>
             <Script
@@ -49,13 +47,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </Script>
           </>
         )}
-        <div className="relative z-10 flex flex-col flex-1">
-          <Header />
-          <main className="flex-1">
-            {children}
-          </main>
-          <Footer />
-        </div>
+        <Header />
+        <main className="flex-1">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   )
