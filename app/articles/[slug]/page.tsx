@@ -156,6 +156,7 @@ function InlineProductCard({ product, affiliateUrl }: { product: Product; affili
           </a>
         </div>
       </div>
+    </div>
   )
 }
 
