@@ -169,6 +169,7 @@ export default async function ArticlePage({ params }: Props) {
   if (!article) notFound()
 
   return (
+    <div className="bg-[#F7FAFC] min-h-screen">
     <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="text-xs text-gray-400 mb-5 flex items-center gap-1.5">
@@ -339,6 +340,7 @@ export default async function ArticlePage({ params }: Props) {
           ← 記事一覧に戻る
         </Link>
       </div>
+    </div>
     </div>
   )
 }
