@@ -187,8 +187,16 @@ export async function getProductsByArticleSlug(articleSlug: string): Promise<Pro
     const response = await notion.databases.query({
       database_id: PRODUCTS_DB,
       filter: {
-        property: '記事スラッグ',
-        multi_select: { contains: articleSlug },
+        and: [
+          {
+            property: '記事スラッグ',
+            multi_select: { contains: articleSlug },
+          },
+          {
+            property: 'ステータス',
+            status: { does_not_equal: '販売終了' },
+          },
+        ],
       },
       sorts: [{ property: '表示順', direction: 'ascending' }],
     })

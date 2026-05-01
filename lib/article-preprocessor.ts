@@ -13,8 +13,65 @@ export function normalize(s: string): string {
  * ① Amazon検索URLを含む行 → 実売価格置換＋カードマーカー挿入
  * ② 番号付きリスト項目 → 商品名マッチングでカードマーカー挿入
  */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function articlePrice(product: Product): string {
+  const price = formatPrice(product.price)
+  if (!price) return ''
+  return price.startsWith('約') ? price : `約${price}`
+}
+
+function productAliases(product: Product): string[] {
+  const names = new Set<string>()
+  names.add(product.name)
+  names.add(product.name.replace(/[（(].*?[）)]/g, '').trim())
+  names.add(product.name.replace(/（1TB）|\(1TB\)/g, '').trim())
+  names.add(product.slug)
+
+  return [...names].filter((name) => name.length >= 4)
+}
+
+function syncBudgetHeading(line: string): string {
+  if (!/^#{2,6}\s/.test(line) || !line.includes('円')) return line
+
+  return line
+    .replace(/【[^】]*円[^】]*】\s*/g, '')
+    .replace(/(【[^】]+】)\s*[〜～~]?[0-9０-９][0-9０-９,.]*(?:万)?円[^：:]*[：:]/g, '$1：')
+}
+
+function syncPriceMentions(content: string, products: Product[]): string {
+  const pricePattern = /約?[0-9０-９][0-9０-９,.]*(?:万)?(?:\s*[〜～~-]\s*約?[0-9０-９][0-9０-９,.]*(?:万)?)?円(?:台)?/g
+  const productsWithPrice = products
+    .filter((product) => product.price)
+    .map((product) => ({
+      price: articlePrice(product),
+      aliases: productAliases(product),
+    }))
+    .sort((a, b) => Math.max(...b.aliases.map((alias) => alias.length)) - Math.max(...a.aliases.map((alias) => alias.length)))
+
+  return content
+    .split('\n')
+    .map((line) => {
+      const budgetSyncedLine = syncBudgetHeading(line)
+      const matches = productsWithPrice.filter(({ aliases }) =>
+        aliases.some((alias) => alias && new RegExp(escapeRegExp(alias), 'i').test(budgetSyncedLine))
+      )
+
+      if (matches.length !== 1 || !pricePattern.test(budgetSyncedLine)) {
+        pricePattern.lastIndex = 0
+        return budgetSyncedLine
+      }
+
+      pricePattern.lastIndex = 0
+      return budgetSyncedLine.replace(pricePattern, matches[0].price)
+    })
+    .join('\n')
+}
+
 export function preprocessContent(content: string, products: Product[]): string {
-  const normalized = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+  const normalized = syncPriceMentions(content.replace(/\r\n/g, '\n').replace(/\r/g, '\n'), products)
   const lines = normalized.split('\n')
   const result: string[] = []
   const cardInsertedFor = new Set<string>()

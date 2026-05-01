@@ -8,12 +8,13 @@ import { buildAffiliateUrl } from '@/lib/affiliate'
 import { normalize, preprocessContent } from '@/lib/article-preprocessor'
 import ProductCard from '@/components/ProductCard'
 import InlineProductCard from '@/components/InlineProductCard'
+import ProductComparisonTable from '@/components/ProductComparisonTable'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export const revalidate = 3600
+export const revalidate = 604800
 
 type Props = {
   params: Promise<{ slug: string }>
@@ -63,6 +64,24 @@ function findProductByKeyword(keyword: string, products: Product[]): Product | u
   })
 }
 
+function pickComparisonProducts(markerText: string, products: Product[]): Product[] {
+  const raw = markerText.slice('!!GADGE_COMPARE_TABLE!!'.length).replace(/^:/, '').trim()
+  if (!raw) return products
+
+  const keys = raw
+    .split(',')
+    .map((key) => decodeURIComponent(key.trim()).toLowerCase())
+    .filter(Boolean)
+
+  if (keys.length === 0) return products
+
+  return products.filter((product) => {
+    const name = product.name.toLowerCase()
+    const slug = product.slug.toLowerCase()
+    return keys.some((key) => name.includes(key) || slug.includes(key))
+  })
+}
+
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const [article, products, allArticles] = await Promise.all([
@@ -82,6 +101,13 @@ export default async function ArticlePage({ params }: Props) {
     article.lastEdited &&
     article.publishedDate &&
     new Date(article.lastEdited).getTime() > new Date(article.publishedDate).getTime()
+
+  const productsByPrice = [...products].sort((a, b) => {
+    if (a.numericPrice && b.numericPrice) return a.numericPrice - b.numericPrice
+    if (a.numericPrice) return -1
+    if (b.numericPrice) return 1
+    return a.displayOrder - b.displayOrder
+  })
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 bg-[#F7FAFC]">
@@ -187,6 +213,10 @@ export default async function ArticlePage({ params }: Props) {
                 } catch {}
                 return null
               }
+              if (text?.startsWith('!!GADGE_COMPARE_TABLE!!')) {
+                const tableProducts = pickComparisonProducts(text, productsByPrice)
+                return <ProductComparisonTable products={tableProducts} title="この記事で紹介する商品の比較" />
+              }
 
               return <p>{children}</p>
             },
@@ -232,7 +262,7 @@ export default async function ArticlePage({ params }: Props) {
             },
           }}
         >
-          {preprocessContent(article.content, products)}
+          {preprocessContent(article.content, productsByPrice)}
         </ReactMarkdown>
       </article>
 
@@ -242,8 +272,13 @@ export default async function ArticlePage({ params }: Props) {
           <h2 className="text-base font-bold text-brand-text mb-4">
             この記事で紹介した商品
           </h2>
+          <ProductComparisonTable
+            products={productsByPrice}
+            title="紹介商品の比較テーブル"
+            className="mb-6"
+          />
           <div className="space-y-3">
-            {products.map((product) => (
+            {productsByPrice.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
