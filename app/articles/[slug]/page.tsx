@@ -12,6 +12,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
 import Image from 'next/image'
+import type { ReactNode } from 'react'
 
 export const revalidate = 604800
 
@@ -68,6 +69,22 @@ function findProductByKeyword(keyword: string, products: Product[]): Product | u
     const n = normalize(p.name), s = normalize(p.slug)
     return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
   })
+}
+
+function rewriteAmazonLabel(children: ReactNode): ReactNode {
+  if (typeof children === 'string') {
+    return children.replace(/Amazon/g, '楽天市場')
+  }
+
+  if (Array.isArray(children)) {
+    return children.map((child, index) => (
+      typeof child === 'string'
+        ? child.replace(/Amazon/g, '楽天市場')
+        : <span key={index}>{child}</span>
+    ))
+  }
+
+  return children
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -220,12 +237,12 @@ export default async function ArticlePage({ params }: Props) {
                   const matched = findProductByKeyword(keyword, products)
                   if (matched?.rakutenUrl) {
                     const affiliateUrl = buildAffiliateUrl(matched.rakutenUrl)
-                    return <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">{children}</a>
+                    return <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">{rewriteAmazonLabel(children)}</a>
                   }
                   // 未登録の場合は楽天検索にフォールバック
                   const rakutenUrl = `https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`
                   const affiliateUrl = buildAffiliateUrl(rakutenUrl)
-                  return <a href={affiliateUrl} target="_blank" rel="noopener noreferrer nofollow">{children}</a>
+                  return <a href={affiliateUrl} className="btn-rakuten" target="_blank" rel="noopener noreferrer nofollow">{rewriteAmazonLabel(children)}</a>
                 } catch {}
               }
 
