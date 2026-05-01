@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug, getPublishedArticles } from '@/lib/notion'
+import { CATEGORIES, getArticleBySlug, getAllSlugs, getProductsByArticleSlug, getPublishedArticles } from '@/lib/notion'
 import type { Product } from '@/lib/notion'
 import ArticleCard from '@/components/ArticleCard'
 import { BASE_URL, MOSHIMO_BASE } from '@/lib/constants'
@@ -77,6 +77,38 @@ function rakutenTextLabel(keyword: string): string {
 
 const rakutenTextLinkClass = 'font-bold text-brand-green underline underline-offset-2 hover:opacity-80'
 
+function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, '\\u003c')
+}
+
+function productListItemJsonLd(product: Product, position: number) {
+  const url = buildAffiliateUrl(product.rakutenUrl)
+  const item: Record<string, unknown> = {
+    '@type': 'Product',
+    name: product.name,
+    url,
+  }
+
+  if (product.imageUrl) item.image = product.imageUrl
+  if (product.maker) item.brand = { '@type': 'Brand', name: product.maker }
+  if (product.numericPrice > 0) {
+    item.offers = {
+      '@type': 'Offer',
+      priceCurrency: 'JPY',
+      price: product.numericPrice,
+      availability: 'https://schema.org/InStock',
+      url,
+    }
+  }
+
+  return {
+    '@type': 'ListItem',
+    position,
+    url,
+    item,
+  }
+}
+
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
   const [article, products, allArticles] = await Promise.all([
@@ -104,9 +136,82 @@ export default async function ArticlePage({ params }: Props) {
     if (b.numericPrice) return 1
     return a.displayOrder - b.displayOrder
   })
+  const structuredProducts = productsByPrice.filter((product) => product.name && product.rakutenUrl)
+  const canonicalUrl = `${BASE_URL}/articles/${article.slug}`
+  const imageUrl = `${BASE_URL}/images/articles/${article.slug}.jpg`
+  const categorySlug = CATEGORIES.find((category) => category.name === article.category)?.slug
+  const breadcrumbList = [
+    { '@type': 'ListItem', position: 1, name: 'ホーム', item: BASE_URL },
+    { '@type': 'ListItem', position: 2, name: '記事一覧', item: `${BASE_URL}/articles` },
+    ...(article.category
+      ? [{
+          '@type': 'ListItem',
+          position: 3,
+          name: article.category,
+          item: categorySlug ? `${BASE_URL}/articles?category=${categorySlug}` : `${BASE_URL}/articles`,
+        }]
+      : []),
+    {
+      '@type': 'ListItem',
+      position: article.category ? 4 : 3,
+      name: article.title,
+      item: canonicalUrl,
+    },
+  ]
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbList,
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: article.title,
+      description: article.metaDescription || undefined,
+      image: [imageUrl],
+      datePublished: article.publishedDate || undefined,
+      dateModified: article.lastEdited || article.publishedDate || undefined,
+      inLanguage: 'ja-JP',
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': canonicalUrl,
+      },
+      author: {
+        '@type': 'Organization',
+        name: 'ガジェパス',
+        url: BASE_URL,
+      },
+      publisher: {
+        '@type': 'Organization',
+        name: 'ガジェパス',
+        url: BASE_URL,
+        logo: {
+          '@type': 'ImageObject',
+          url: `${BASE_URL}/logo.png`,
+        },
+      },
+    },
+    ...(structuredProducts.length > 0
+      ? [{
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: `${article.title}で紹介した商品`,
+          url: canonicalUrl,
+          itemListElement: structuredProducts.map((product, index) =>
+            productListItemJsonLd(product, index + 1)
+          ),
+        }]
+      : []),
+  ]
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 bg-[#F7FAFC]">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }}
+      />
+
       {/* Breadcrumb */}
       <nav className="text-xs text-gray-400 mb-5 flex items-center gap-1.5">
         <Link href="/" className="hover:text-brand-green transition-colors">ホーム</Link>
