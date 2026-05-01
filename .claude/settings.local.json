@@ -17,7 +17,22 @@
       "mcp__Claude_Preview__preview_start",
       "Bash(npm run *)",
       "Bash(node -e ' *)",
-      "Bash(dir \".next\\\\server\\\\app\\\\articles\")"
+      "Bash(dir \".next\\\\server\\\\app\\\\articles\")",
+      "Bash(node scripts/count_products.mjs)",
+      "Bash(node scripts/list_products.mjs)",
+      "Bash(node scripts/update_products.mjs --cat=マイク --dry)",
+      "WebFetch(domain:webservice.rakuten.co.jp)",
+      "WebFetch(domain:rakutenintelligence-api.github.io)",
+      "WebFetch(domain:developers.rakuten.com)",
+      "Bash(node scripts/update_products.mjs --dry)",
+      "Bash(node scripts/update_products.mjs --update-only)",
+      "Bash(node scripts/search_one.mjs \"Genki ShadowCast\")",
+      "Bash(node scripts/search_one.mjs \"Elgato 4K X キャプチャー\")",
+      "Bash(node scripts/search_one.mjs \"Elgato HD60 キャプチャー\")",
+      "Bash(node scripts/search_one.mjs \"Elgato 4K X\")",
+      "Bash(node scripts/search_one.mjs \"Elgato HD60X\")",
+      "Bash(node scripts/update_remaining.mjs)",
+      "Bash(node scripts/find_discontinued.mjs)"
     ]
   }
 }
