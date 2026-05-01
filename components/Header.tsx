@@ -16,12 +16,15 @@ export default function Header() {
               priority
             />
           </Link>
-          <nav className="flex items-center gap-2 text-sm font-bold">
-            <Link href="/tools/gear-finder" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
-              <span>🔍</span> 機材検索
+          <nav className="flex items-center gap-1.5 text-xs font-bold">
+            <Link href="/tools/gear-finder" className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>🔍</span><span className="hidden sm:inline"> 機材検索</span>
             </Link>
-            <Link href="/tools/free-games" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
-              <span>🎮</span> 無料ゲーム
+            <Link href="/tools/streaming-checker" className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>🎙️</span><span className="hidden sm:inline"> 環境診断</span>
+            </Link>
+            <Link href="/tools/free-games" className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>🎮</span><span className="hidden sm:inline"> 無料ゲーム</span>
             </Link>
             <Link href="/articles" className="px-3 py-1.5 rounded-full bg-brand-green text-white hover:bg-brand-green/80 transition-all duration-200">
               記事一覧

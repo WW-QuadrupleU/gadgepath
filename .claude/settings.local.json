@@ -14,7 +14,10 @@
       "Bash(dir \"C:\\\\Users\\\\whale\\\\Desktop\\\\Claude\\\\gadgets\\\\public\")",
       "Bash(dir)",
       "Bash(npx tsc *)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm run *)",
+      "Bash(node -e ' *)",
+      "Bash(dir \".next\\\\server\\\\app\\\\articles\")"
     ]
   }
 }
