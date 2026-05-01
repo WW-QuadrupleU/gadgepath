@@ -10,7 +10,7 @@ export default function Footer() {
               <span className="text-brand-green">ガジェ</span>パス
             </p>
             <p className="text-xs leading-relaxed">
-              クリエイター・在宅ワーカー向けガジェット比較サイト。用途・予算別に最適な機材選びをサポートします。
+              配信・制作・在宅ワーク・PCゲーム環境を整えるためのデジタル環境ナビ。機材選び、設定、トラブル対策を整理します。
             </p>
           </div>
           <div>

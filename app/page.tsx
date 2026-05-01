@@ -16,12 +16,12 @@ export default async function HomePage() {
       <section className="bg-brand-dark text-white py-12 px-4">
         <div className="max-w-5xl mx-auto text-center">
           <h1 className="text-2xl sm:text-3xl font-bold mb-3 leading-snug">
-            クリエイター・在宅ワーカーのための<br className="hidden sm:block" />
-            <span className="text-brand-green">ガジェット比較</span>サイト
+            配信・制作・PC環境を整える<br className="hidden sm:block" />
+            <span className="text-brand-green">デジタル環境ナビ</span>
           </h1>
           <p className="text-sm text-gray-300 mb-6 max-w-xl mx-auto leading-relaxed">
-            マイク・カメラ・照明・ヘッドセットなど、配信・動画制作に必要な機材を<br className="hidden sm:block" />
-            用途・予算別に徹底比較。最適な一台を見つけよう。
+            マイク・カメラ・照明などの機材比較から、OBS設定、USBまわりのトラブル対策、<br className="hidden sm:block" />
+            PCゲーム情報まで、用途別にわかりやすく整理します。
           </p>
           <Link
             href="/articles"
@@ -73,17 +73,17 @@ export default async function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
             <div>
               <div className="flex justify-center mb-3">
-                <Image src="/icons/reason-target.png" alt="用途別に比較" width={56} height={56} />
+                <Image src="/icons/reason-target.png" alt="用途別に整理" width={56} height={56} />
               </div>
-              <h3 className="font-bold text-sm mb-1">用途別に比較</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">配信・動画・テレワークなど用途に合わせた機材選びをサポート</p>
+              <h3 className="font-bold text-sm mb-1">用途別に整理</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">配信・動画・在宅ワーク・PCゲームなど目的に合わせて判断軸を整理</p>
             </div>
             <div>
               <div className="flex justify-center mb-3">
-                <Image src="/icons/reason-creator.png" alt="現役クリエイターが執筆" width={56} height={56} />
+                <Image src="/icons/reason-creator.png" alt="公開情報をもとに検証" width={56} height={56} />
               </div>
-              <h3 className="font-bold text-sm mb-1">現役クリエイターが執筆</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">YouTube・TikTokで実際に使用した経験をもとに解説</p>
+              <h3 className="font-bold text-sm mb-1">根拠を分けて解説</h3>
+              <p className="text-xs text-gray-500 leading-relaxed">公式仕様、販売情報、公開レビュー、口コミ傾向を分けて整理</p>
             </div>
             <div>
               <div className="flex justify-center mb-3">

@@ -162,6 +162,13 @@ export default async function ArticlePage({ params }: Props) {
         <Link href="/disclosure" className="text-brand-green hover:underline ml-1">詳細はこちら</Link>
       </div>
 
+      {productsByPrice.length > 0 && (
+        <div className="bg-white border border-brand-green/30 rounded-lg px-4 py-3 mb-8 text-xs text-gray-600 leading-relaxed">
+          本記事は、公式情報・販売ページ・公開レビュー・口コミ傾向をもとに、購入前に確認したいポイントを整理しています。
+          実機レビューではありません。価格・販売状況は変動するため、購入前に各販売ページで最新情報をご確認ください。
+        </div>
+      )}
+
       {/* Article content */}
       <article className="article-content">
         <ReactMarkdown

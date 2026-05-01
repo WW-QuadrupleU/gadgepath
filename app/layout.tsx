@@ -8,10 +8,10 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID
 
 export const metadata: Metadata = {
   title: {
-    default: 'ガジェパス | クリエイター・在宅ワーカー向けガジェット比較',
+    default: 'ガジェパス | 配信・制作・PC環境の選び方ガイド',
     template: '%s | ガジェパス',
   },
-  description: 'YouTuber・TikToker・在宅ワーカー向けに、マイク・カメラ・照明・ヘッドセットなどの機材を徹底比較。用途・予算別に最適なガジェット選びをサポートします。',
+  description: 'ガジェパスは、配信・動画制作・在宅ワーク・PCゲーム環境を整えたい人向けに、ガジェット比較、設定ガイド、トラブル対策、無料ゲーム情報を整理するデジタル環境ナビです。',
   metadataBase: new URL('https://gadgepath.com'),
   openGraph: {
     siteName: 'ガジェパス',
