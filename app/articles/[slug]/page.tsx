@@ -19,6 +19,13 @@ type Props = {
   params: Promise<{ slug: string }>
 }
 
+const NON_PRODUCT_ARTICLE_SLUGS = new Set([
+  'chatgpt-gemini-claude-comparison-2026',
+  'claude-creative-connectors',
+  'macro-pad-guide-2026',
+  'xchat-review-2026',
+])
+
 export async function generateStaticParams() {
   try {
     const slugs = await getAllSlugs()
@@ -71,6 +78,7 @@ export default async function ArticlePage({ params }: Props) {
     getPublishedArticles(),
   ])
   if (!article) notFound()
+  const articleProducts = NON_PRODUCT_ARTICLE_SLUGS.has(slug) ? [] : products
 
   // 同カテゴリ・自記事除外・最大4件
   const relatedArticles = allArticles
@@ -83,7 +91,7 @@ export default async function ArticlePage({ params }: Props) {
     article.publishedDate &&
     new Date(article.lastEdited).getTime() > new Date(article.publishedDate).getTime()
 
-  const productsByPrice = [...products].sort((a, b) => {
+  const productsByPrice = [...articleProducts].sort((a, b) => {
     if (a.numericPrice && b.numericPrice) return a.numericPrice - b.numericPrice
     if (a.numericPrice) return -1
     if (b.numericPrice) return 1
@@ -243,7 +251,7 @@ export default async function ArticlePage({ params }: Props) {
       </article>
 
       {/* 商品一覧（全商品を表示・楽天URLなしはボタン非表示） */}
-      {products.length > 0 && (
+      {productsByPrice.length > 0 && (
         <section className="mt-12 pt-8 border-t border-gray-200">
           <h2 className="text-base font-bold text-brand-text mb-4">
             この記事で紹介した商品
