@@ -1,36 +1,37 @@
 import { Client } from '@notionhq/client'
 import { NotionToMarkdown } from 'notion-to-md'
 
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
 
 async function fetchWithRetry(url: string | URL | Request, init?: RequestInit): Promise<Response> {
-  let retries = 0;
+  let retries = 0
+
   while (true) {
     try {
-      const response = await fetch(url, init);
+      const response = await fetch(url, init)
       if (response.status >= 500 && response.status <= 599 && retries < MAX_RETRIES) {
-        retries++;
-        console.warn(`Notion API returned ${response.status}, retrying (${retries}/${MAX_RETRIES})...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * retries));
-        continue;
+        retries++
+        console.warn(`Notion API returned ${response.status}, retrying (${retries}/${MAX_RETRIES})...`)
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * retries))
+        continue
       }
-      return response;
+      return response
     } catch (error) {
       if (retries < MAX_RETRIES) {
-        retries++;
-        console.warn(`Notion API fetch failed, retrying (${retries}/${MAX_RETRIES})...`);
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS * retries));
-        continue;
+        retries++
+        console.warn(`Notion API fetch failed, retrying (${retries}/${MAX_RETRIES})...`)
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * retries))
+        continue
       }
-      throw error;
+      throw error
     }
   }
 }
 
-const notion = new Client({ 
+const notion = new Client({
   auth: process.env.NOTION_TOKEN,
-  fetch: fetchWithRetry as any
+  fetch: fetchWithRetry as any,
 })
 const n2m = new NotionToMarkdown({ notionClient: notion })
 
@@ -72,6 +73,7 @@ export async function getPublishedArticles(): Promise<Article[]> {
     },
     sorts: [{ property: '公開日', direction: 'descending' }],
   })
+
   return response.results.map(pageToArticle)
 }
 
@@ -95,19 +97,19 @@ export async function getArticleBySlug(slug: string): Promise<ArticleWithContent
   return { ...pageToArticle(page), content }
 }
 
-export async function getAllSlugs(): Promise<{ slug: string }[]> {
+export async function getAllSlugs(): Promise<{ slug: string; lastEdited: string; publishedDate: string }[]> {
   const response = await notion.databases.query({
     database_id: ARTICLES_DB,
     filter: { property: 'ステータス', select: { equals: '公開済み' } },
   })
+
   return response.results.map((page: any) => ({
     slug: page.properties['スラッグ']?.rich_text[0]?.plain_text || '',
+    lastEdited: page.last_edited_time || '',
+    publishedDate: page.properties['公開日']?.date?.start || '',
   }))
 }
 
-// ────────────────────────────────────────
-// 商品データベース
-// ────────────────────────────────────────
 export type Product = {
   id: string
   name: string
@@ -125,12 +127,14 @@ export type Product = {
 }
 
 function pageToProduct(page: any): Product {
+  const price = page.properties['価格']?.rich_text[0]?.plain_text || ''
+
   return {
     id: page.id,
     name: page.properties['商品名']?.title[0]?.plain_text || '',
     slug: page.properties['スラッグ']?.rich_text[0]?.plain_text || '',
     rakutenUrl: page.properties['楽天URL']?.url || '',
-    price: page.properties['価格']?.rich_text[0]?.plain_text || '',
+    price,
     imageUrl: page.properties['画像URL']?.url || '',
     category: page.properties['カテゴリ']?.select?.name || '',
     articleSlugs: page.properties['記事スラッグ']?.multi_select?.map((s: any) => s.name) || [],
@@ -138,15 +142,15 @@ function pageToProduct(page: any): Product {
     status: page.properties['ステータス']?.status?.name || '現行品',
     maker: page.properties['メーカー']?.select?.name || page.properties['メーカー']?.rich_text?.[0]?.plain_text || '',
     features: page.properties['特徴タグ']?.multi_select?.map((s: any) => s.name) || [],
-    numericPrice: extractNumericPrice(page.properties['価格']?.rich_text[0]?.plain_text || ''),
+    numericPrice: extractNumericPrice(price),
   }
 }
 
 function extractNumericPrice(raw: string): number {
   if (!raw) return 0
-  const stripped = raw.replace(/[,，\s円約〜]/g, '')
+  const stripped = raw.replace(/[,，\s円約〜～]/g, '')
   const num = Number(stripped)
-  return isNaN(num) ? 0 : num
+  return Number.isNaN(num) ? 0 : num
 }
 
 export async function getAllActiveProducts(): Promise<Product[]> {
@@ -157,22 +161,21 @@ export async function getAllActiveProducts(): Promise<Product[]> {
         and: [
           {
             property: 'ステータス',
-            status: { does_not_equal: '販売終了' }
+            status: { does_not_equal: '販売終了' },
           },
           {
             property: 'カテゴリ',
-            select: { does_not_equal: '機材セット' }
+            select: { does_not_equal: '機材セット' },
           },
           {
             property: 'カテゴリ',
-            select: { does_not_equal: 'AIツール' }
-          }
-        ]
+            select: { does_not_equal: 'AIツール' },
+          },
+        ],
       },
       sorts: [{ property: '表示順', direction: 'ascending' }],
     })
-    // Get all results, potentially handling pagination if needed in the future
-    // For now, assume it fits in one page (< 100 items) or we could loop
+
     return response.results.map(pageToProduct)
   } catch {
     return []
@@ -189,35 +192,34 @@ export async function getProductsByArticleSlug(articleSlug: string): Promise<Pro
       },
       sorts: [{ property: '表示順', direction: 'ascending' }],
     })
+
     return response.results.map(pageToProduct)
   } catch {
     return []
   }
 }
 
-// ────────────────────────────────────────
-// 価格の表示整形：数字のみ入力 → "2,500円" に変換
-// すでに「約」「円」「〜」などが含まれる場合はそのまま返す
 export function formatPrice(raw: string): string {
   if (!raw) return ''
   const stripped = raw.replace(/[,，\s円]/g, '')
   const num = Number(stripped)
-  if (!isNaN(num) && stripped !== '') {
+
+  if (!Number.isNaN(num) && stripped !== '') {
     return num.toLocaleString('ja-JP') + '円'
   }
+
   return raw
 }
 
-// ────────────────────────────────────────
 export const CATEGORIES = [
-  { name: 'マイク', slug: 'mic', emoji: '🎙️', icon: '/icons/mic.png' },
-  { name: 'カメラ', slug: 'camera', emoji: '📷', icon: '/icons/camera.png' },
-  { name: '照明', slug: 'light', emoji: '💡', icon: '/icons/light.png' },
-  { name: 'ヘッドセット', slug: 'headset', emoji: '🎧', icon: '/icons/headset.png' },
-  { name: 'SSD・ストレージ', slug: 'storage', emoji: '💾', icon: '/icons/storage.png' },
-  { name: 'USBハブ', slug: 'hub', emoji: '🔌', icon: '/icons/hub.png' },
-  { name: '機材セット', slug: 'set', emoji: '📦', icon: '/icons/set.png' },
-  { name: 'キャプチャーボード', slug: 'capture', emoji: '🎮', icon: '/icons/capture.png' },
-  { name: 'パソコン', slug: 'pc', emoji: '💻', icon: '/icons/pc.png' },
-  { name: 'AIツール', slug: 'ai', emoji: '🤖', icon: '/icons/ai.png' },
+  { name: 'マイク', slug: 'mic', emoji: 'Mic', icon: '/icons/mic.png' },
+  { name: 'カメラ', slug: 'camera', emoji: 'Camera', icon: '/icons/camera.png' },
+  { name: '照明', slug: 'light', emoji: 'Light', icon: '/icons/light.png' },
+  { name: 'ヘッドセット', slug: 'headset', emoji: 'Headset', icon: '/icons/headset.png' },
+  { name: 'SSD・ストレージ', slug: 'storage', emoji: 'SSD', icon: '/icons/storage.png' },
+  { name: 'USBハブ', slug: 'hub', emoji: 'Hub', icon: '/icons/hub.png' },
+  { name: '機材セット', slug: 'set', emoji: 'Set', icon: '/icons/set.png' },
+  { name: 'キャプチャーボード', slug: 'capture', emoji: 'Capture', icon: '/icons/capture.png' },
+  { name: 'パソコン', slug: 'pc', emoji: 'PC', icon: '/icons/pc.png' },
+  { name: 'AIツール', slug: 'ai', emoji: 'AI', icon: '/icons/ai.png' },
 ]

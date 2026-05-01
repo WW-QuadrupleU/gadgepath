@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug } from '@/lib/notion'
+import { getArticleBySlug, getAllSlugs, getProductsByArticleSlug, getPublishedArticles } from '@/lib/notion'
 import type { Product } from '@/lib/notion'
+import ArticleCard from '@/components/ArticleCard'
 import { BASE_URL, MOSHIMO_BASE } from '@/lib/constants'
 import { buildAffiliateUrl } from '@/lib/affiliate'
 import { normalize, preprocessContent } from '@/lib/article-preprocessor'
@@ -64,11 +65,17 @@ function findProductByKeyword(keyword: string, products: Product[]): Product | u
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params
-  const [article, products] = await Promise.all([
+  const [article, products, allArticles] = await Promise.all([
     getArticleBySlug(slug),
     getProductsByArticleSlug(slug),
+    getPublishedArticles(),
   ])
   if (!article) notFound()
+
+  // 同カテゴリ・自記事除外・最大4件
+  const relatedArticles = allArticles
+    .filter((a) => a.category === article.category && a.slug !== slug)
+    .slice(0, 4)
 
   // 更新日は公開日より後の場合のみ表示
   const showLastEdited =
@@ -238,6 +245,28 @@ export default async function ArticlePage({ params }: Props) {
           <div className="space-y-3">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 同カテゴリの関連記事 */}
+      {relatedArticles.length > 0 && (
+        <section className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-bold text-brand-text">
+              {article.category} の関連記事
+            </h2>
+            <Link
+              href={`/articles?category=${encodeURIComponent(article.category)}`}
+              className="text-xs text-brand-green hover:underline"
+            >
+              もっと見る →
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {relatedArticles.map((related) => (
+              <ArticleCard key={related.id} article={related} />
             ))}
           </div>
         </section>

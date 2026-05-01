@@ -13,7 +13,8 @@
       "mcp__72d41e97-a328-421b-abd5-b42de5979812__notion-update-data-source",
       "Bash(dir \"C:\\\\Users\\\\whale\\\\Desktop\\\\Claude\\\\gadgets\\\\public\")",
       "Bash(dir)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

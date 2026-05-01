@@ -6,7 +6,6 @@ const notion = new Client({ auth: process.env.NOTION_TOKEN })
 const ARTICLES_DB = process.env.NOTION_ARTICLES_DB_ID!
 
 export async function GET(request: Request) {
-  // 認証チェック（CRON_SECRETが設定されている場合のみ）
   const secret = process.env.CRON_SECRET
   if (secret) {
     const auth = request.headers.get('authorization')
@@ -16,7 +15,6 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 公開済み記事を全件取得
     const res = await notion.databases.query({
       database_id: ARTICLES_DB,
       filter: { property: 'ステータス', select: { equals: '公開済み' } },
@@ -29,22 +27,21 @@ export async function GET(request: Request) {
       const slug: string = p.properties['スラッグ']?.rich_text[0]?.plain_text || ''
       if (!slug) continue
 
-      // 紐づく商品を取得して充足度を判定
       const products = await getProductsByArticleSlug(slug)
       let status: string
+
       if (products.length === 0) {
-        status = '❌ 未登録'
-      } else if (products.every(p => p.imageUrl && p.rakutenUrl && p.price)) {
-        status = '✅ 完了'
+        status = '未着手'
+      } else if (products.every((p) => p.imageUrl && p.rakutenUrl && p.price)) {
+        status = '完了'
       } else {
-        status = '⚠️ 一部不足'
+        status = '進行中'
       }
 
-      // Notionの「商品ステータス」プロパティを更新
       await notion.pages.update({
         page_id: page.id,
         properties: {
-          '商品ステータス': { select: { name: status } },
+          商品データ登録: { status: { name: status } },
         },
       })
 
