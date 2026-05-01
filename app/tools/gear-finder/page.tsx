@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getAllActiveProducts } from '@/lib/notion'
 import GearFilter from '@/components/GearFilter'
 
@@ -6,7 +7,7 @@ export const metadata = {
   description: 'カテゴリ、価格帯、メーカー、特徴からあなたにぴったりの配信機材やクリエイター向けガジェットを検索できます。',
 }
 
-export const revalidate = 3600 // 1時間に1回再検証
+export const revalidate = 604800
 
 export default async function GearFinderPage() {
   const products = await getAllActiveProducts()
@@ -22,7 +23,10 @@ export default async function GearFinderPage() {
         </p>
       </div>
 
-      <GearFilter initialProducts={products} />
+      {/* useSearchParams を使うため Suspense でラップ */}
+      <Suspense fallback={<div className="text-center text-gray-400 py-12">読み込み中...</div>}>
+        <GearFilter initialProducts={products} />
+      </Suspense>
     </div>
   )
 }

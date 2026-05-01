@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import type { Product } from '@/lib/notion'
 import { CATEGORIES } from '@/lib/notion'
 import ProductCard from '@/components/ProductCard'
@@ -19,8 +20,23 @@ const PRICE_RANGES = [
 ]
 
 export default function GearFilter({ initialProducts }: Props) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedPriceId, setSelectedPriceId] = useState<string>('all')
+  // URLクエリパラメータから初期フィルターを取得
+  // 例: /tools/gear-finder?category=カメラ&price=under10k
+  const searchParams = useSearchParams()
+  const validCategoryNames = useMemo(() => CATEGORIES.map(c => c.name), [])
+  const validPriceIds = useMemo(() => PRICE_RANGES.map(r => r.id), [])
+
+  const initialCategory = (() => {
+    const c = searchParams.get('category')
+    return c && validCategoryNames.includes(c) ? c : 'all'
+  })()
+  const initialPriceId = (() => {
+    const p = searchParams.get('price')
+    return p && validPriceIds.includes(p) ? p : 'all'
+  })()
+
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory)
+  const [selectedPriceId, setSelectedPriceId] = useState<string>(initialPriceId)
   const [selectedMakers, setSelectedMakers] = useState<string[]>([])
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
 

@@ -38,6 +38,15 @@ const STEPS = [
   },
 ];
 
+// ── 予算 → 価格帯ID 変換 ─────────────────────────────────
+// GearFilter の PRICE_RANGES と対応させる
+function budgetToPriceId(budget: string): string {
+  if (budget === "low")  return "under10k";   // 〜1万円
+  if (budget === "mid")  return "10k-30k";    // 1万円〜3万円
+  if (budget === "high") return "30k-50k";    // 3万円以上（ひとまず3万円〜5万円で絞り込み）
+  return "all";
+}
+
 // ── 推薦ロジック ──────────────────────────────────────────
 
 type Rec = {
@@ -175,6 +184,7 @@ export default function StreamingChecker() {
     const recs = getRecommendations(use, problem, budget);
     const mainRecs = recs.filter((r) => r.priority === "main");
     const subRecs  = recs.filter((r) => r.priority === "sub");
+    const priceId  = budgetToPriceId(budget);
 
     return (
       <div className="w-full max-w-2xl mx-auto">
@@ -202,7 +212,7 @@ export default function StreamingChecker() {
                   📖 {rec.articleLabel}
                 </Link>
                 <Link
-                  href={`/tools/gear-finder`}
+                  href={`/tools/gear-finder?category=${encodeURIComponent(rec.category)}&price=${priceId}`}
                   className="inline-flex items-center gap-1 border border-brand-green text-brand-green text-xs font-bold px-4 py-2 rounded-full hover:bg-brand-green/10 transition-colors"
                 >
                   🔍 機材検索で探す
