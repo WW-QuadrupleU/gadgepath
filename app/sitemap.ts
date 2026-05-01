@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next'
 import { getAllSlugs } from '@/lib/notion'
 
-export const revalidate = 3600
+export const revalidate = 604800
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://gadgepath.com'
