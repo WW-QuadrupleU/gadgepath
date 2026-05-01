@@ -16,8 +16,14 @@ export default function Header() {
               priority
             />
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/articles" className="hover:text-brand-green transition-colors">
+          <nav className="flex items-center gap-2 text-sm font-bold">
+            <Link href="/tools/gear-finder" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>🔍</span> 機材検索
+            </Link>
+            <Link href="/tools/free-games" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>🎮</span> 無料ゲーム
+            </Link>
+            <Link href="/articles" className="px-3 py-1.5 rounded-full bg-brand-green text-white hover:bg-brand-green/80 transition-all duration-200">
               記事一覧
             </Link>
           </nav>

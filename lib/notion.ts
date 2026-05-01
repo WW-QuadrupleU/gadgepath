@@ -118,6 +118,10 @@ export type Product = {
   category: string
   articleSlugs: string[]
   displayOrder: number
+  status: string
+  maker: string
+  features: string[]
+  numericPrice: number
 }
 
 function pageToProduct(page: any): Product {
@@ -131,6 +135,47 @@ function pageToProduct(page: any): Product {
     category: page.properties['カテゴリ']?.select?.name || '',
     articleSlugs: page.properties['記事スラッグ']?.multi_select?.map((s: any) => s.name) || [],
     displayOrder: page.properties['表示順']?.number ?? 999,
+    status: page.properties['ステータス']?.status?.name || '現行品',
+    maker: page.properties['メーカー']?.select?.name || page.properties['メーカー']?.rich_text?.[0]?.plain_text || '',
+    features: page.properties['特徴タグ']?.multi_select?.map((s: any) => s.name) || [],
+    numericPrice: extractNumericPrice(page.properties['価格']?.rich_text[0]?.plain_text || ''),
+  }
+}
+
+function extractNumericPrice(raw: string): number {
+  if (!raw) return 0
+  const stripped = raw.replace(/[,，\s円約〜]/g, '')
+  const num = Number(stripped)
+  return isNaN(num) ? 0 : num
+}
+
+export async function getAllActiveProducts(): Promise<Product[]> {
+  try {
+    const response = await notion.databases.query({
+      database_id: PRODUCTS_DB,
+      filter: {
+        and: [
+          {
+            property: 'ステータス',
+            status: { does_not_equal: '販売終了' }
+          },
+          {
+            property: 'カテゴリ',
+            select: { does_not_equal: '機材セット' }
+          },
+          {
+            property: 'カテゴリ',
+            select: { does_not_equal: 'AIツール' }
+          }
+        ]
+      },
+      sorts: [{ property: '表示順', direction: 'ascending' }],
+    })
+    // Get all results, potentially handling pagination if needed in the future
+    // For now, assume it fits in one page (< 100 items) or we could loop
+    return response.results.map(pageToProduct)
+  } catch {
+    return []
   }
 }
 
@@ -173,5 +218,6 @@ export const CATEGORIES = [
   { name: 'USBハブ', slug: 'hub', emoji: '🔌', icon: '/icons/hub.png' },
   { name: '機材セット', slug: 'set', emoji: '📦', icon: '/icons/set.png' },
   { name: 'キャプチャーボード', slug: 'capture', emoji: '🎮', icon: '/icons/capture.png' },
+  { name: 'パソコン', slug: 'pc', emoji: '💻', icon: '/icons/pc.png' },
   { name: 'AIツール', slug: 'ai', emoji: '🤖', icon: '/icons/ai.png' },
 ]
