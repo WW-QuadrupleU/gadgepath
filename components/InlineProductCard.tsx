@@ -18,7 +18,6 @@ export default function InlineProductCard({ product, affiliateUrl }: Props) {
           fill
           sizes="80px"
           className="object-contain p-1"
-          unoptimized
         />
       </div>
       <div className="flex flex-col justify-between flex-1 min-w-0">

@@ -19,7 +19,6 @@ export default function ProductCard({ product }: Props) {
             fill
             sizes="96px"
             className="object-contain p-1"
-            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">
