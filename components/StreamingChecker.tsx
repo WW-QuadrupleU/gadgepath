@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import type { Product } from "@/lib/notion";
-import ProductComparisonTable from "@/components/ProductComparisonTable";
 
 // ── 選択肢データ ──────────────────────────────────────────
 
@@ -51,29 +49,6 @@ type Rec = {
   articleSlug: string;
   articleLabel: string;
 };
-
-type Props = {
-  products: Product[];
-};
-
-function getComparisonProducts(recs: Rec[], products: Product[]): Product[] {
-  const articleSlugs = new Set(recs.map((rec) => rec.articleSlug));
-  const categories = new Set(recs.map((rec) => rec.category));
-  const seen = new Set<string>();
-
-  return products.filter((product) => {
-    const isRelated =
-      product.articleSlugs.some((slug) => articleSlugs.has(slug)) ||
-      categories.has(product.category);
-
-    if (!isRelated || seen.has(product.id)) {
-      return false;
-    }
-
-    seen.add(product.id);
-    return true;
-  });
-}
 
 function getRecommendations(use: string, problem: string, budget: string): Rec[] {
   const recs: Rec[] = [];
@@ -176,7 +151,7 @@ function getRecommendations(use: string, problem: string, budget: string): Rec[]
 
 // ── メインコンポーネント ──────────────────────────────────
 
-export default function StreamingChecker({ products }: Props) {
+export default function StreamingChecker() {
   const [step, setStep]       = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
 
@@ -200,7 +175,6 @@ export default function StreamingChecker({ products }: Props) {
     const recs = getRecommendations(use, problem, budget);
     const mainRecs = recs.filter((r) => r.priority === "main");
     const subRecs  = recs.filter((r) => r.priority === "sub");
-    const comparisonProducts = getComparisonProducts(recs, products);
 
     return (
       <div className="w-full max-w-2xl mx-auto">
@@ -239,12 +213,6 @@ export default function StreamingChecker({ products }: Props) {
         </div>
 
         {/* サブ推薦 */}
-        <ProductComparisonTable
-          products={comparisonProducts}
-          maxItems={8}
-          className="mb-8"
-        />
-
         {subRecs.length > 0 && (
           <div className="space-y-3 mb-8">
             <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">あわせて検討したい機材</p>

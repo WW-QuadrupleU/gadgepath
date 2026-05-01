@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react'
 import type { Product } from '@/lib/notion'
 import { CATEGORIES } from '@/lib/notion'
 import ProductCard from '@/components/ProductCard'
-import ProductComparisonTable from '@/components/ProductComparisonTable'
 import Image from 'next/image'
 
 type Props = {
@@ -239,19 +238,11 @@ export default function GearFilter({ initialProducts }: Props) {
             <p className="text-sm text-gray-400">フィルター条件を変更してお試しください。</p>
           </div>
         ) : (
-          <>
-            <ProductComparisonTable
-              products={finalFilteredProducts}
-              title="絞り込み結果の比較テーブル"
-              maxItems={12}
-              className="mb-8"
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {finalFilteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {finalFilteredProducts.map(product => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         )}
       </div>
     </div>

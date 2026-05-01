@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { getAllActiveProducts } from '@/lib/notion'
 import StreamingChecker from '@/components/StreamingChecker'
 
 export const metadata: Metadata = {
@@ -9,9 +8,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 604800
 
-export default async function StreamingCheckerPage() {
-  const products = await getAllActiveProducts()
-
+export default function StreamingCheckerPage() {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-12 max-w-3xl">
@@ -26,7 +23,7 @@ export default async function StreamingCheckerPage() {
         </div>
 
         {/* 診断コンポーネント */}
-        <StreamingChecker products={products} />
+        <StreamingChecker />
       </div>
     </div>
   )

@@ -8,7 +8,6 @@ import { buildAffiliateUrl } from '@/lib/affiliate'
 import { normalize, preprocessContent } from '@/lib/article-preprocessor'
 import ProductCard from '@/components/ProductCard'
 import InlineProductCard from '@/components/InlineProductCard'
-import ProductComparisonTable from '@/components/ProductComparisonTable'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
@@ -61,24 +60,6 @@ function findProductByKeyword(keyword: string, products: Product[]): Product | u
   return products.find(p => {
     const n = normalize(p.name), s = normalize(p.slug)
     return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
-  })
-}
-
-function pickComparisonProducts(markerText: string, products: Product[]): Product[] {
-  const raw = markerText.slice('!!GADGE_COMPARE_TABLE!!'.length).replace(/^:/, '').trim()
-  if (!raw) return products
-
-  const keys = raw
-    .split(',')
-    .map((key) => decodeURIComponent(key.trim()).toLowerCase())
-    .filter(Boolean)
-
-  if (keys.length === 0) return products
-
-  return products.filter((product) => {
-    const name = product.name.toLowerCase()
-    const slug = product.slug.toLowerCase()
-    return keys.some((key) => name.includes(key) || slug.includes(key))
   })
 }
 
@@ -213,11 +194,6 @@ export default async function ArticlePage({ params }: Props) {
                 } catch {}
                 return null
               }
-              if (text?.startsWith('!!GADGE_COMPARE_TABLE!!')) {
-                const tableProducts = pickComparisonProducts(text, productsByPrice)
-                return <ProductComparisonTable products={tableProducts} title="この記事で紹介する商品の比較" />
-              }
-
               return <p>{children}</p>
             },
 
@@ -272,11 +248,6 @@ export default async function ArticlePage({ params }: Props) {
           <h2 className="text-base font-bold text-brand-text mb-4">
             この記事で紹介した商品
           </h2>
-          <ProductComparisonTable
-            products={productsByPrice}
-            title="紹介商品の比較テーブル"
-            className="mb-6"
-          />
           <div className="space-y-3">
             {productsByPrice.map((product) => (
               <ProductCard key={product.id} product={product} />

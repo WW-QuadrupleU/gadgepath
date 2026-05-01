@@ -66,16 +66,16 @@
 .article-content blockquote {
   @apply border-l-4 border-brand-green pl-4 italic text-gray-500 my-4 text-sm;
 }
-.article-content table:not(.product-comparison-table) {
+.article-content table {
   @apply w-full border-collapse text-sm mb-6 overflow-x-auto block;
 }
-.article-content table:not(.product-comparison-table) th {
+.article-content table th {
   @apply bg-brand-dark text-white px-3 py-2 text-left font-semibold;
 }
-.article-content table:not(.product-comparison-table) td {
+.article-content table td {
   @apply border border-gray-200 px-3 py-2;
 }
-.article-content table:not(.product-comparison-table) tr:nth-child(even) td {
+.article-content table tr:nth-child(even) td {
   @apply bg-gray-50;
 }
 .article-content code {
