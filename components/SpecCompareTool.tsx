@@ -76,7 +76,10 @@ function generationRank(generation: string): number {
   if (generation.includes('RTX 40') || generation.includes('RX 7000') || generation.includes('Ryzen 7000') || generation.includes('14th Gen')) return 800
   if (generation.includes('RTX 30') || generation.includes('RX 6000') || generation.includes('13th Gen') || generation.includes('12th Gen')) return 700
   if (generation.includes('Ryzen 5000')) return 650
+  if (generation.includes('RTX 20') || generation.includes('RX 5000')) return 600
+  if (generation.includes('Arc Alchemist')) return 580
   if (generation.includes('GTX 16') || generation.includes('10th Gen')) return 500
+  if (generation.includes('GTX 10')) return 450
   return 0
 }
 
