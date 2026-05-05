@@ -10,7 +10,7 @@ export const SITE_TOOLS = [
   {
     title: 'AIモデル用途別性能比較',
     description:
-      'GPT、Claude、Gemini、Kling、Veoなどを、リサーチ、文章、コード、分析、エージェント、画像、動画の性能とコスパで比較できます。',
+      'GPT、Claude、Gemini、Kling、Veoなどを、リサーチ、文章、コード、分析、エージェント、画像、Text to Video、Image to Videoの性能とコスパで比較できます。',
     href: '/tools/ai-model-compare',
     icon: '/icons/ai.png',
     label: 'AI比較',

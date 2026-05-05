@@ -69,7 +69,8 @@ const ZERO_PERFORMANCE: Record<AiGenreId, number> = {
   analysis: 0,
   agent: 0,
   image: 0,
-  video: 0,
+  textVideo: 0,
+  imageVideo: 0,
 }
 
 function scores(values: Partial<Record<AiGenreId, number>>): Record<AiGenreId, number> {
@@ -232,7 +233,7 @@ function mediaPrice(model: AaMediaModel): number | undefined {
   )
 }
 
-function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRank: number): AiModel | null {
+function mapMediaModel(model: AaMediaModel, type: 'image' | 'textVideo' | 'imageVideo', fallbackRank: number): AiModel | null {
   if (!model.name) return null
 
   const creator = model.model_creator?.name || 'Unknown'
@@ -240,14 +241,20 @@ function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRan
   const rank = model.rank ?? fallbackRank
   const price = mediaPrice(model)
   const cost = mediaCostScore(price)
-  const genre: AiGenreId = type === 'image' ? 'image' : 'video'
+  const genre: AiGenreId = type
 
   return {
     id: `${type}-${model.id || model.slug || slugify(`${creator}-${model.name}`)}`,
     name: model.name,
     creator,
     family: mediaFamily(model.name, creator),
-    releaseLabel: model.release_date ? `Released ${model.release_date}` : type === 'image' ? 'Text to Image' : 'Text to Video',
+    releaseLabel: model.release_date
+      ? `Released ${model.release_date}`
+      : type === 'image'
+        ? 'Text to Image'
+        : type === 'textVideo'
+          ? 'Text to Video'
+          : 'Image to Video',
     modality: type === 'image' ? 'Image' : 'Video',
     accessType: 'Specialized',
     costLevel: price == null ? 3 : costLevel(price),
@@ -261,7 +268,9 @@ function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRan
     sourceUrl:
       type === 'image'
         ? 'https://artificialanalysis.ai/image/leaderboard/text-to-image'
-        : 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
+        : type === 'textVideo'
+          ? 'https://artificialanalysis.ai/video/leaderboard/text-to-video'
+          : 'https://artificialanalysis.ai/video/leaderboard/image-to-video',
     performance: scores({ [genre]: performance }),
     costPerformance: scores({ [genre]: costPerformanceScore(performance, cost) }),
     strengths: [
@@ -271,7 +280,9 @@ function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRan
     cautions: ['文章や調査の汎用AIではありません', '商用利用条件と生成物の権利は公式情報を確認してください'],
     bestFor: type === 'image' ? '記事画像、サムネイル、広告素材の生成。' : '短尺動画、Bロール、SNS向け映像素材の生成。',
     avoidFor: '文章作成、調査、コード補助を主目的にする人。',
-    note: `Artificial Analysisの${type === 'image' ? 'Text to Image' : 'Text to Video'}指標をもとに自動反映しています。`,
+    note: `Artificial Analysisの${
+      type === 'image' ? 'Text to Image' : type === 'textVideo' ? 'Text to Video' : 'Image to Video'
+    }指標をもとに自動反映しています。`,
   }
 }
 
@@ -290,7 +301,7 @@ async function fetchAa<T>(path: string, key: string): Promise<T[]> {
 function uniqueModels(models: AiModel[]): AiModel[] {
   const seen = new Set<string>()
   return models.filter((model) => {
-    const key = `${model.modality}:${model.creator}:${model.name}`.toLowerCase()
+    const key = model.id.toLowerCase()
     if (seen.has(key)) return false
     seen.add(key)
     return true
@@ -334,15 +345,22 @@ export async function GET() {
       .map((model, index) => mapMediaModel(model, 'image', index + 1))
       .filter((model): model is AiModel => Boolean(model))
 
-    const videoModels = [...textVideos, ...imageVideos]
+    const textVideoModels = textVideos
       .filter((model) => model.elo != null)
       .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
       .slice(0, 40)
-      .map((model, index) => mapMediaModel(model, 'video', index + 1))
+      .map((model, index) => mapMediaModel(model, 'textVideo', index + 1))
+      .filter((model): model is AiModel => Boolean(model))
+
+    const imageVideoModels = imageVideos
+      .filter((model) => model.elo != null)
+      .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
+      .slice(0, 40)
+      .map((model, index) => mapMediaModel(model, 'imageVideo', index + 1))
       .filter((model): model is AiModel => Boolean(model))
 
     const payload: AiModelComparePayload = {
-      models: uniqueModels([...llmModels, ...imageModels, ...videoModels]),
+      models: uniqueModels([...llmModels, ...imageModels, ...textVideoModels, ...imageVideoModels]),
       updatedAt: new Date().toISOString(),
       source: 'artificial-analysis',
       sourceLabel: 'Artificial Analysis',

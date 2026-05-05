@@ -5,7 +5,8 @@ export type AiGenreId =
   | 'analysis'
   | 'agent'
   | 'image'
-  | 'video'
+  | 'textVideo'
+  | 'imageVideo'
 
 export type AiGenre = {
   id: AiGenreId
@@ -109,13 +110,22 @@ export const AI_GENRES: AiGenre[] = [
     sourceMetric: 'Artificial Analysis Text to Image Eloを主な基準にしています。',
   },
   {
-    id: 'video',
-    label: '動画生成・映像制作',
-    shortLabel: '動画',
+    id: 'textVideo',
+    label: '動画生成（Text to Video）',
+    shortLabel: 'Text→Video',
     description:
-      '短尺動画、Bロール、SNS向け動画素材に向く動画モデルを比較します。',
+      'テキストプロンプトだけから動画を生成するモデルを比較します。',
     primaryMetrics: ['Text to Video Elo', '映像品質', '動き', '素材化'],
-    sourceMetric: 'Artificial Analysis Text to Video / Image to Video Eloを主な基準にしています。',
+    sourceMetric: 'Artificial Analysis Text to Video Elo（No Audio）を主な基準にしています。',
+  },
+  {
+    id: 'imageVideo',
+    label: '動画生成（Image to Video）',
+    shortLabel: 'Image→Video',
+    description:
+      '参照画像をもとに動画を生成するモデルを比較します。',
+    primaryMetrics: ['Image to Video Elo', '映像品質', '動き', '素材化'],
+    sourceMetric: 'Artificial Analysis Image to Video Elo（No Audio）を主な基準にしています。',
   },
 ]
 
@@ -126,7 +136,8 @@ const ZERO_PERFORMANCE: Record<AiGenreId, number> = {
   analysis: 0,
   agent: 0,
   image: 0,
-  video: 0,
+  textVideo: 0,
+  imageVideo: 0,
 }
 
 function scores(values: Partial<Record<AiGenreId, number>>): Record<AiGenreId, number> {
@@ -321,12 +332,12 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     speed: 45,
     japanese: 35,
     context: 30,
-    visibleIn: ['video'],
+    visibleIn: ['textVideo'],
     rank: 3,
     metric: 'Text to Video Elo 1246',
     sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    performance: scores({ video: 96 }),
-    costPerformance: scores({ video: 72 }),
+    performance: scores({ textVideo: 96 }),
+    costPerformance: scores({ textVideo: 72 }),
     strengths: ['動画生成の上位候補', '人物や動きのある映像で比較しやすい', 'Kling系の最新候補として重要'],
     cautions: ['価格は高め', '長尺や正確な商品再現は個別確認が必要'],
     bestFor: 'SNS動画、Bロール、動きのある短尺映像。',
@@ -345,12 +356,12 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     speed: 45,
     japanese: 38,
     context: 32,
-    visibleIn: ['video'],
+    visibleIn: ['textVideo'],
     rank: 10,
     metric: 'Text to Video Elo 1215',
     sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    performance: scores({ video: 91 }),
-    costPerformance: scores({ video: 70 }),
+    performance: scores({ textVideo: 91 }),
+    costPerformance: scores({ textVideo: 70 }),
     strengths: ['制作ツールとしての完成度が高い', '編集ワークフローに組み込みやすい', '映像制作者向けの選択肢'],
     cautions: ['単純な品質順位だけならKlingやVeoも比較したい', '料金体系と利用制限の確認が必要'],
     bestFor: '映像制作、SNS素材、編集込みの動画ワークフロー。',
@@ -362,19 +373,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Veo 3.1',
     creator: 'Google',
     family: 'Veo',
-    releaseLabel: 'Text to Video',
+    releaseLabel: 'Image to Video',
     modality: 'Video',
     accessType: 'Specialized',
     costLevel: 4,
     speed: 45,
     japanese: 40,
     context: 32,
-    visibleIn: ['video'],
+    visibleIn: ['imageVideo'],
     rank: 14,
-    metric: 'Text to Video Elo 1208',
-    sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    performance: scores({ video: 90 }),
-    costPerformance: scores({ video: 70 }),
+    metric: 'Image to Video Elo 1235',
+    sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/image-to-video',
+    performance: scores({ imageVideo: 90 }),
+    costPerformance: scores({ imageVideo: 70 }),
     strengths: ['Google系動画生成の主力候補', '映像品質が高い', 'Veo系の比較軸として重要'],
     cautions: ['提供地域やプラン条件を確認したい', '細かな編集は外部ツール併用が前提になりやすい'],
     bestFor: '高品質な短尺動画や映像素材を作りたい人。',
