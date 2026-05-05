@@ -17,10 +17,10 @@ export default function Header() {
             />
           </Link>
           <nav className="flex min-w-0 items-center gap-1.5 text-xs font-bold">
-            <Link href="/tools" className="rounded-full border border-white/20 px-3 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
+            <Link href="/tools" className="rounded-full bg-brand-green px-3 py-1.5 text-white transition-all duration-200 hover:bg-brand-green/80">
               ツール一覧
             </Link>
-            <Link href="/articles" className="rounded-full bg-brand-green px-3 py-1.5 text-white transition-all duration-200 hover:bg-brand-green/80">
+            <Link href="/articles" className="rounded-full border border-white/20 px-3 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
               記事一覧
             </Link>
           </nav>
