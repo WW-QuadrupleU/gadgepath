@@ -70,7 +70,37 @@ function SegmentedTabs({ tab, setTab }: { tab: Tab; setTab: (tab: Tab) => void }
   )
 }
 
-function SelectBox<T extends { id: string; name: string }>({
+function generationRank(generation: string): number {
+  if (generation.includes('RTX 50') || generation.includes('RX 9000') || generation.includes('9000 X3D') || generation.includes('Arrow Lake')) return 900
+  if (generation.includes('Ryzen 9000')) return 890
+  if (generation.includes('RTX 40') || generation.includes('RX 7000') || generation.includes('Ryzen 7000') || generation.includes('14th Gen')) return 800
+  if (generation.includes('RTX 30') || generation.includes('RX 6000') || generation.includes('13th Gen') || generation.includes('12th Gen')) return 700
+  if (generation.includes('Ryzen 5000')) return 650
+  if (generation.includes('GTX 16') || generation.includes('10th Gen')) return 500
+  return 0
+}
+
+function groupedOptions<T extends { id: string; name: string; generation: string; year: number }>(items: T[]) {
+  const sorted = [...items].sort((a, b) => {
+    const generationDiff = generationRank(b.generation) - generationRank(a.generation)
+    if (generationDiff) return generationDiff
+    const yearDiff = b.year - a.year
+    if (yearDiff) return yearDiff
+    return a.name.localeCompare(b.name, 'ja')
+  })
+
+  return sorted.reduce<{ label: string; items: T[] }[]>((groups, item) => {
+    const group = groups.find((entry) => entry.label === item.generation)
+    if (group) {
+      group.items.push(item)
+    } else {
+      groups.push({ label: item.generation, items: [item] })
+    }
+    return groups
+  }, [])
+}
+
+function SelectBox<T extends { id: string; name: string; generation: string; year: number }>({
   label,
   value,
   items,
@@ -81,6 +111,8 @@ function SelectBox<T extends { id: string; name: string }>({
   items: T[]
   onChange: (id: string) => void
 }) {
+  const groups = groupedOptions(items)
+
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-bold text-gray-500">{label}</span>
@@ -89,10 +121,14 @@ function SelectBox<T extends { id: string; name: string }>({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-brand-text outline-none transition-colors focus:border-brand-green"
       >
-        {items.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name}
-          </option>
+        {groups.map((group) => (
+          <optgroup key={group.label} label={group.label}>
+            {group.items.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </optgroup>
         ))}
       </select>
     </label>
@@ -289,11 +325,11 @@ function RadarChart({ values }: { values: { label: string; value: number }[] }) 
   )
 }
 
-function CpuCompare() {
+function CpuCompare({ cpuData }: { cpuData: CpuSpec[] }) {
   const [leftId, setLeftId] = useState('core-i7-14700k')
   const [rightId, setRightId] = useState('ryzen-7-7800x3d')
-  const left = CPU_DATA.find((cpu) => cpu.id === leftId) ?? CPU_DATA[0]
-  const right = CPU_DATA.find((cpu) => cpu.id === rightId) ?? CPU_DATA[1]
+  const left = cpuData.find((cpu) => cpu.id === leftId) ?? cpuData[0] ?? CPU_DATA[0]
+  const right = cpuData.find((cpu) => cpu.id === rightId) ?? cpuData[1] ?? CPU_DATA[1]
   const metrics: Metric[] = [
     { label: 'PassMark CPU Mark', a: left.passmarkMulti, b: right.passmarkMulti },
     { label: 'シングルスレッド', a: left.passmarkSingle, b: right.passmarkSingle },
@@ -307,8 +343,8 @@ function CpuCompare() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
-        <SelectBox label="CPU 1" value={leftId} items={CPU_DATA} onChange={setLeftId} />
-        <SelectBox label="CPU 2" value={rightId} items={CPU_DATA} onChange={setRightId} />
+        <SelectBox label="CPU 1" value={left.id} items={cpuData} onChange={setLeftId} />
+        <SelectBox label="CPU 2" value={right.id} items={cpuData} onChange={setRightId} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <CpuSummary cpu={left} />
@@ -319,18 +355,18 @@ function CpuCompare() {
         <MetricBars metrics={metrics} aName={left.name} bName={right.name} />
       </section>
       <div className="grid gap-4 md:grid-cols-2">
-        <RankingTable title="CPU総合ランキング" items={CPU_DATA} score={cpuOverall} />
-        <RankingTable title="CPUコスパランキング" items={CPU_DATA} score={(item) => costIndex(cpuOverall(item), item.marketPriceYen)} />
+        <RankingTable title="CPU総合ランキング" items={cpuData} score={cpuOverall} />
+        <RankingTable title="CPUコスパランキング" items={cpuData} score={(item) => costIndex(cpuOverall(item), item.marketPriceYen)} />
       </div>
     </div>
   )
 }
 
-function GpuCompare() {
+function GpuCompare({ gpuData }: { gpuData: GpuSpec[] }) {
   const [leftId, setLeftId] = useState('rtx-4070-super')
   const [rightId, setRightId] = useState('rx-7800-xt')
-  const left = GPU_DATA.find((gpu) => gpu.id === leftId) ?? GPU_DATA[0]
-  const right = GPU_DATA.find((gpu) => gpu.id === rightId) ?? GPU_DATA[1]
+  const left = gpuData.find((gpu) => gpu.id === leftId) ?? gpuData[0] ?? GPU_DATA[0]
+  const right = gpuData.find((gpu) => gpu.id === rightId) ?? gpuData[1] ?? GPU_DATA[1]
   const metrics: Metric[] = [
     { label: '3DMark Time Spy Graphics', a: left.timeSpyGraphics, b: right.timeSpyGraphics },
     { label: 'PassMark G3D Mark', a: left.passmarkG3D, b: right.passmarkG3D },
@@ -345,8 +381,8 @@ function GpuCompare() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
-        <SelectBox label="GPU 1" value={leftId} items={GPU_DATA} onChange={setLeftId} />
-        <SelectBox label="GPU 2" value={rightId} items={GPU_DATA} onChange={setRightId} />
+        <SelectBox label="GPU 1" value={left.id} items={gpuData} onChange={setLeftId} />
+        <SelectBox label="GPU 2" value={right.id} items={gpuData} onChange={setRightId} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <GpuSummary gpu={left} />
@@ -357,8 +393,8 @@ function GpuCompare() {
         <MetricBars metrics={metrics} aName={left.name} bName={right.name} />
       </section>
       <div className="grid gap-4 md:grid-cols-2">
-        <RankingTable title="GPU総合ランキング" items={GPU_DATA} score={gpuOverall} />
-        <RankingTable title="GPUコスパランキング" items={GPU_DATA} score={(item) => costIndex(gpuOverall(item), item.marketPriceYen)} />
+        <RankingTable title="GPU総合ランキング" items={gpuData} score={gpuOverall} />
+        <RankingTable title="GPUコスパランキング" items={gpuData} score={(item) => costIndex(gpuOverall(item), item.marketPriceYen)} />
       </div>
     </div>
   )
@@ -397,11 +433,11 @@ function bottleneckMessage(cpu: CpuSpec, gpu: GpuSpec): string {
   return 'CPUとGPUのバランスはおおむね良好です。用途に合わせてメモリ容量、冷却、電源も確認してください。'
 }
 
-function BuildCompare() {
+function BuildCompare({ cpuData, gpuData }: { cpuData: CpuSpec[]; gpuData: GpuSpec[] }) {
   const [cpuId, setCpuId] = useState('ryzen-7-7800x3d')
   const [gpuId, setGpuId] = useState('rtx-4070-super')
-  const cpu = CPU_DATA.find((item) => item.id === cpuId) ?? CPU_DATA[0]
-  const gpu = GPU_DATA.find((item) => item.id === gpuId) ?? GPU_DATA[0]
+  const cpu = cpuData.find((item) => item.id === cpuId) ?? cpuData[0] ?? CPU_DATA[0]
+  const gpu = gpuData.find((item) => item.id === gpuId) ?? gpuData[0] ?? GPU_DATA[0]
   const score = useMemo(() => buildScore(cpu, gpu), [cpu, gpu])
   const radar = [
     { label: 'ゲーム', value: score.gaming },
@@ -415,8 +451,8 @@ function BuildCompare() {
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
-        <SelectBox label="CPU" value={cpuId} items={CPU_DATA} onChange={setCpuId} />
-        <SelectBox label="GPU" value={gpuId} items={GPU_DATA} onChange={setGpuId} />
+        <SelectBox label="CPU" value={cpu.id} items={cpuData} onChange={setCpuId} />
+        <SelectBox label="GPU" value={gpu.id} items={gpuData} onChange={setGpuId} />
       </div>
       <section className="rounded-lg border border-brand-green/30 bg-white p-5">
         <div className="grid gap-5 md:grid-cols-[240px_1fr] md:items-center">
@@ -448,7 +484,13 @@ function BuildCompare() {
   )
 }
 
-export default function SpecCompareTool() {
+export default function SpecCompareTool({
+  cpuData = CPU_DATA,
+  gpuData = GPU_DATA,
+}: {
+  cpuData?: CpuSpec[]
+  gpuData?: GpuSpec[]
+}) {
   const [tab, setTab] = useState<Tab>('build')
 
   return (
@@ -457,10 +499,9 @@ export default function SpecCompareTool() {
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
         {DATA_NOTE} 価格は相場感をつかむための目安で、特定ショップ名やセール条件には依存させていません。
       </div>
-      {tab === 'cpu' && <CpuCompare />}
-      {tab === 'gpu' && <GpuCompare />}
-      {tab === 'build' && <BuildCompare />}
+      {tab === 'cpu' && <CpuCompare cpuData={cpuData} />}
+      {tab === 'gpu' && <GpuCompare gpuData={gpuData} />}
+      {tab === 'build' && <BuildCompare cpuData={cpuData} gpuData={gpuData} />}
     </div>
   )
 }
-

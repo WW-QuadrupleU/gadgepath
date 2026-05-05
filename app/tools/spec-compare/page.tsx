@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
 import SpecCompareTool from '@/components/SpecCompareTool'
+import { getSpecCompareData } from '@/lib/spec-compare-notion'
+
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'CPU・GPU性能比較ツール | ガジェパス',
@@ -7,7 +10,9 @@ export const metadata: Metadata = {
     'CPUとGPUを選んで、ベンチマーク、ゲーム性能、制作性能、消費電力、コスパを比較できる無料ツール。CPU+GPUの組み合わせ評価にも対応。',
 }
 
-export default function SpecComparePage() {
+export default async function SpecComparePage() {
+  const { cpuData, gpuData } = await getSpecCompareData()
+
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-10">
@@ -22,9 +27,8 @@ export default function SpecComparePage() {
           </p>
         </header>
 
-        <SpecCompareTool />
+        <SpecCompareTool cpuData={cpuData} gpuData={gpuData} />
       </div>
     </main>
   )
 }
-
