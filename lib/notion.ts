@@ -1,8 +1,8 @@
 import { Client } from '@notionhq/client'
 import { NotionToMarkdown } from 'notion-to-md'
 
-const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 1000
+const MAX_RETRIES = 8
+const RETRY_DELAY_MS = 1500
 
 async function fetchWithRetry(url: string | URL | Request, init?: RequestInit): Promise<Response> {
   let retries = 0
