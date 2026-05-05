@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
 import { getPublishedArticles } from '@/lib/notion'
+import { SITE_TOOLS } from '@/lib/tools'
 import ArticleCard from '@/components/ArticleCard'
 
 export const revalidate = 3600
@@ -11,30 +12,6 @@ export const metadata: Metadata = {
   description:
     'CPU/GPU性能比較、機材・ガジェット検索、無料ゲーム情報など、PC・配信・動画制作環境づくりに役立つ無料ツールと記事をまとめています。',
 }
-
-const tools = [
-  {
-    title: 'CPU・GPU性能比較',
-    description: 'CPU、GPU、CPU+GPU構成を選び、ゲーム性能、制作性能、AI処理、消費電力、コスパを比較できます。',
-    href: '/tools/spec-compare',
-    icon: '/icons/pc.png',
-    label: '性能比較',
-  },
-  {
-    title: '機材・ガジェット検索',
-    description: 'マイク、カメラ、USBハブ、照明、ストレージなどをカテゴリや価格帯から探せます。',
-    href: '/tools/gear-finder',
-    icon: '/icons/capture.png',
-    label: '機材検索',
-  },
-  {
-    title: '無料ゲーム情報',
-    description: '期間限定で配布されているPCゲームやDLCをまとめて確認できます。',
-    href: '/tools/free-games',
-    icon: '/icons/ai.png',
-    label: '毎時更新',
-  },
-]
 
 export default async function HomePage() {
   const articles = await getPublishedArticles().catch(() => [])
@@ -63,7 +40,7 @@ export default async function HomePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          {tools.map((tool) => (
+          {SITE_TOOLS.map((tool) => (
             <Link
               key={tool.href}
               href={tool.href}

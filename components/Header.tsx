@@ -17,14 +17,8 @@ export default function Header() {
             />
           </Link>
           <nav className="flex min-w-0 items-center gap-1.5 text-xs font-bold">
-            <Link href="/tools/spec-compare" className="flex items-center gap-1 rounded-full border border-white/20 px-2.5 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
-              <span>PC</span><span className="hidden sm:inline">性能比較</span>
-            </Link>
-            <Link href="/tools/gear-finder" className="flex items-center gap-1 rounded-full border border-white/20 px-2.5 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
-              <span>機材検索</span>
-            </Link>
-            <Link href="/tools/free-games" className="flex items-center gap-1 rounded-full border border-white/20 px-2.5 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
-              <span>無料ゲーム</span>
+            <Link href="/tools" className="rounded-full border border-white/20 px-3 py-1.5 transition-all duration-200 hover:border-brand-green hover:bg-brand-green/10 hover:text-brand-green">
+              ツール一覧
             </Link>
             <Link href="/articles" className="rounded-full bg-brand-green px-3 py-1.5 text-white transition-all duration-200 hover:bg-brand-green/80">
               記事一覧
