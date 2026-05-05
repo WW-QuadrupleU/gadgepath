@@ -106,8 +106,7 @@ export function preprocessContent(content: string, products: Product[]): string 
     const standaloneRakutenMatch = line.match(/^\s*\[([^\]]+)\]\((https?:\/\/[^)]+rakuten\.co\.jp[^)]*)\)\s*$/)
     if (standaloneRakutenMatch) {
       const matched = findProductByRakutenLink(standaloneRakutenMatch[1], standaloneRakutenMatch[2], products)
-      if (matched?.rakutenUrl && matched.imageUrl && !cardInsertedFor.has(matched.name)) {
-        cardInsertedFor.add(matched.name)
+      if (matched?.rakutenUrl && matched.imageUrl) {
         result.push(`!!GADGE_CARD_NAME!!:${encodeURIComponent(matched.name)}`)
         continue
       }
