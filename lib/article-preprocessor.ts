@@ -33,6 +33,31 @@ function productAliases(product: Product): string[] {
   return [...names].filter((name) => name.length >= 4)
 }
 
+function comparableUrl(value: string): string {
+  try {
+    const url = new URL(value)
+    return `${url.origin}${url.pathname}`.replace(/\/+$/, '').toLowerCase()
+  } catch {
+    return value.split('?')[0].replace(/\/+$/, '').toLowerCase()
+  }
+}
+
+function findProductByRakutenLink(label: string, href: string, products: Product[]): Product | undefined {
+  const targetUrl = comparableUrl(href)
+  const byUrl = products.find((product) => product.rakutenUrl && comparableUrl(product.rakutenUrl) === targetUrl)
+  if (byUrl) return byUrl
+
+  const normalizedLabel = normalize(label.replace(/楽天市場で見る|Amazonで見る|を見る|を/g, ''))
+  return products.find((product) => {
+    const normalizedName = normalize(product.name)
+    const normalizedSlug = normalize(product.slug)
+    return normalizedLabel.includes(normalizedName) ||
+      normalizedName.includes(normalizedLabel) ||
+      normalizedLabel.includes(normalizedSlug) ||
+      normalizedSlug.includes(normalizedLabel)
+  })
+}
+
 function syncBudgetHeading(line: string): string {
   if (!/^#{2,6}\s/.test(line) || !line.includes('円')) return line
 
@@ -78,6 +103,16 @@ export function preprocessContent(content: string, products: Product[]): string 
 
   // ── Pass 1: Amazon検索URL処理（既存ロジック） ──
   for (const line of lines) {
+    const standaloneRakutenMatch = line.match(/^\s*\[([^\]]+)\]\((https?:\/\/[^)]+rakuten\.co\.jp[^)]*)\)\s*$/)
+    if (standaloneRakutenMatch) {
+      const matched = findProductByRakutenLink(standaloneRakutenMatch[1], standaloneRakutenMatch[2], products)
+      if (matched?.rakutenUrl && matched.imageUrl && !cardInsertedFor.has(matched.name)) {
+        cardInsertedFor.add(matched.name)
+        result.push(`!!GADGE_CARD_NAME!!:${encodeURIComponent(matched.name)}`)
+        continue
+      }
+    }
+
     const urlMatch = line.match(/\]\((https?:\/\/(?:www\.)?amazon\.co\.jp\/s[^)]+)\)/)
     if (!urlMatch) {
       result.push(line)
