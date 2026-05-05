@@ -1,12 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  AI_COMPARE_NOTE,
   AI_GENRES,
-  AI_MODELS,
+  FALLBACK_AI_PAYLOAD,
   type AiGenreId,
   type AiModel,
+  type AiModelComparePayload,
 } from '@/lib/ai-model-compare-data'
 
 function scoreTone(score: number): string {
@@ -34,16 +34,30 @@ function bestUse(model: AiModel): string {
   return sorted.join(' / ')
 }
 
+function formatDate(value: string): string {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date)
+}
+
 function ModelSelect({
   label,
   value,
+  models,
   onChange,
 }: {
   label: string
   value: string
+  models: AiModel[]
   onChange: (value: string) => void
 }) {
-  const groups = AI_MODELS.reduce<Record<string, AiModel[]>>((acc, model) => {
+  const groups = models.reduce<Record<string, AiModel[]>>((acc, model) => {
     acc[model.family] = [...(acc[model.family] || []), model]
     return acc
   }, {})
@@ -56,9 +70,9 @@ function ModelSelect({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-brand-text outline-none transition-colors focus:border-brand-green"
       >
-        {Object.entries(groups).map(([family, models]) => (
+        {Object.entries(groups).map(([family, familyModels]) => (
           <optgroup key={family} label={family}>
-            {models.map((model) => (
+            {familyModels.map((model) => (
               <option key={model.id} value={model.id}>
                 {model.name}
               </option>
@@ -100,7 +114,9 @@ function RankingCard({ model, genreId, rank }: { model: AiModel; genreId: AiGenr
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-brand-green">#{rank} {model.family}</p>
+          <p className="text-xs font-black text-brand-green">
+            #{model.rank ?? rank} {model.family}
+          </p>
           <h3 className="text-lg font-extrabold text-brand-text">{model.name}</h3>
           <p className="text-xs text-gray-400">{model.creator} / {model.releaseLabel}</p>
         </div>
@@ -115,7 +131,8 @@ function RankingCard({ model, genreId, rank }: { model: AiModel; genreId: AiGenr
         <MiniStat label="日本語" value={model.japanese} />
         <MiniStat label="文脈" value={model.context} />
       </div>
-      <p className="mt-3 text-sm leading-relaxed text-gray-600">{model.bestFor}</p>
+      {model.metric && <p className="mt-3 text-xs font-bold text-gray-500">{model.metric}</p>}
+      <p className="mt-2 text-sm leading-relaxed text-gray-600">{model.bestFor}</p>
       <p className="mt-2 text-xs leading-relaxed text-gray-400">{model.note}</p>
     </div>
   )
@@ -137,17 +154,13 @@ function TextPanel({ title, items, tone }: { title: string; items: string[]; ton
 function ModelSummary({ model }: { model: AiModel }) {
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-black text-brand-green">{model.creator} / {model.family}</p>
-          <h3 className="text-lg font-extrabold text-brand-text">{model.name}</h3>
-          <p className="mt-1 text-xs text-gray-400">
-            得意: {bestUse(model)} / コスト感: {costLabel(model.costLevel)}
-          </p>
-          {model.benchmarkNote && (
-            <p className="mt-2 text-xs leading-relaxed text-gray-500">{model.benchmarkNote}</p>
-          )}
-        </div>
+      <div className="mb-4">
+        <p className="text-xs font-black text-brand-green">{model.creator} / {model.family}</p>
+        <h3 className="text-lg font-extrabold text-brand-text">{model.name}</h3>
+        <p className="mt-1 text-xs text-gray-400">
+          得意: {bestUse(model)} / コスト感: {costLabel(model.costLevel)}
+        </p>
+        {model.metric && <p className="mt-2 text-xs leading-relaxed text-gray-500">{model.metric}</p>}
       </div>
       <div className="grid gap-3">
         {AI_GENRES.map((genre) => (
@@ -168,17 +181,46 @@ function ModelSummary({ model }: { model: AiModel }) {
 }
 
 export default function AiModelCompareTool() {
+  const [payload, setPayload] = useState<AiModelComparePayload>(FALLBACK_AI_PAYLOAD)
+  const [loading, setLoading] = useState(true)
   const [genreId, setGenreId] = useState<AiGenreId>('research')
-  const [firstId, setFirstId] = useState('gpt-5-4')
-  const [secondId, setSecondId] = useState('claude-opus-4-6')
+  const [firstId, setFirstId] = useState(FALLBACK_AI_PAYLOAD.models[0]?.id ?? '')
+  const [secondId, setSecondId] = useState(FALLBACK_AI_PAYLOAD.models[2]?.id ?? '')
 
+  useEffect(() => {
+    let active = true
+
+    async function loadModels() {
+      try {
+        const response = await fetch('/api/ai-model-compare')
+        if (!response.ok) throw new Error('failed to load AI model data')
+        const data = (await response.json()) as AiModelComparePayload
+        if (!active || !data.models?.length) return
+
+        setPayload(data)
+        setFirstId((current) => data.models.some((model) => model.id === current) ? current : data.models[0].id)
+        setSecondId((current) => data.models.some((model) => model.id === current) ? current : data.models[1]?.id ?? data.models[0].id)
+      } catch {
+        if (active) setPayload(FALLBACK_AI_PAYLOAD)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+
+    loadModels()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const models = payload.models
   const genre = AI_GENRES.find((item) => item.id === genreId) ?? AI_GENRES[0]
   const ranking = useMemo(
-    () => [...AI_MODELS].sort((a, b) => b.scores[genreId] - a.scores[genreId]),
-    [genreId]
+    () => [...models].sort((a, b) => b.scores[genreId] - a.scores[genreId]),
+    [models, genreId]
   )
-  const first = AI_MODELS.find((model) => model.id === firstId) ?? AI_MODELS[0]
-  const second = AI_MODELS.find((model) => model.id === secondId) ?? AI_MODELS[1]
+  const first = models.find((model) => model.id === firstId) ?? models[0]
+  const second = models.find((model) => model.id === secondId) ?? models[1] ?? models[0]
   const winner =
     first.scores[genreId] === second.scores[genreId]
       ? 'ほぼ同等'
@@ -190,8 +232,14 @@ export default function AiModelCompareTool() {
     <div className="space-y-8">
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs font-black text-brand-green">Model Ranking</p>
-          <h2 className="text-xl font-extrabold text-brand-text">用途を選んでAIモデルの向き不向きを見る</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs font-black text-brand-green">Model Ranking</p>
+            <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-bold text-gray-500">
+              {payload.isLive ? '自動更新' : 'フォールバック'}
+            </span>
+            {loading && <span className="text-[10px] font-bold text-gray-400">更新確認中...</span>}
+          </div>
+          <h2 className="mt-1 text-xl font-extrabold text-brand-text">用途を選んでAIモデルの向き不向きを見る</h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-500">{genre.description}</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-4">
@@ -228,10 +276,10 @@ export default function AiModelCompareTool() {
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <ModelSelect label="比較するモデル 1" value={firstId} onChange={setFirstId} />
+            <ModelSelect label="比較するモデル 1" value={first.id} models={models} onChange={setFirstId} />
           </div>
           <div className="flex-1">
-            <ModelSelect label="比較するモデル 2" value={secondId} onChange={setSecondId} />
+            <ModelSelect label="比較するモデル 2" value={second.id} models={models} onChange={setSecondId} />
           </div>
           <div className="rounded-lg bg-brand-dark px-4 py-3 text-white sm:w-44">
             <p className="text-[10px] font-bold text-gray-300">選択ジャンルの優位</p>
@@ -247,10 +295,11 @@ export default function AiModelCompareTool() {
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <h2 className="text-lg font-extrabold text-brand-text">全モデルの用途別スコア</h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[860px] border-collapse text-sm">
+          <table className="w-full min-w-[920px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-400">
                 <th className="py-2 pr-3">モデル</th>
+                <th className="px-3 py-2 text-right">指標</th>
                 {AI_GENRES.map((item) => (
                   <th key={item.id} className="px-3 py-2 text-right">{item.shortLabel}</th>
                 ))}
@@ -258,12 +307,13 @@ export default function AiModelCompareTool() {
               </tr>
             </thead>
             <tbody>
-              {AI_MODELS.map((model) => (
+              {models.map((model) => (
                 <tr key={model.id} className="border-b border-gray-100">
                   <td className="py-3 pr-3">
                     <p className="font-black text-brand-text">{model.name}</p>
                     <p className="text-xs text-gray-400">{model.creator} / {model.releaseLabel}</p>
                   </td>
+                  <td className="px-3 py-3 text-right text-xs font-bold text-gray-500">{model.metric ?? '-'}</td>
                   {AI_GENRES.map((item) => (
                     <td key={item.id} className="px-3 py-3 text-right font-bold text-brand-text">
                       {model.scores[item.id]}
@@ -278,15 +328,14 @@ export default function AiModelCompareTool() {
       </section>
 
       <p className="rounded-lg bg-gray-100 p-4 text-xs leading-relaxed text-gray-500">
-        {AI_COMPARE_NOTE}{' '}
-        参考データ元：
+        {payload.message} 最終更新: {formatDate(payload.updatedAt)}。参考データ元：
         <a
-          href="https://artificialanalysis.ai/"
+          href={payload.sourceUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="font-bold text-brand-green underline underline-offset-2"
         >
-          Artificial Analysis
+          {payload.sourceLabel}
         </a>
       </p>
     </div>

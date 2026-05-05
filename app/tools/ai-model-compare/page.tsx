@@ -6,7 +6,7 @@ export const revalidate = 3600
 export const metadata: Metadata = {
   title: 'AIモデル用途別性能比較ツール | ガジェパス',
   description:
-    'GPT、Claude、Gemini、Grok、Perplexity、画像生成、動画生成モデルを、リサーチ、文章作成、コード、分析、画像、動画、コスパの用途別に比較できる無料ツールです。',
+    'GPT、Claude、Gemini、Grok、Kling、Veo、Runway、画像生成モデルを、リサーチ、文章作成、コード、分析、画像、動画、コスパの用途別に比較できる無料ツールです。',
 }
 
 export default function AiModelComparePage() {
@@ -19,8 +19,8 @@ export default function AiModelComparePage() {
             AIモデルを用途別に比較
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-500">
-            GPT、Claude、Gemini、Grokなどをモデル単位で比較し、リサーチ、文章作成、コード、分析、画像生成、動画生成、コスパのどこに向くかを確認できます。
-            バージョンごとの性能差が見えるように、サービス名ではなくモデル名を基準に整理しています。
+            LLM、画像生成、動画生成モデルをモデル単位で比較します。Artificial Analysisの公開ベンチマークを参考に、
+            リサーチ、文章作成、コード、分析、画像生成、動画生成、コスパのどこに向くかを確認できます。
           </p>
         </header>
 
