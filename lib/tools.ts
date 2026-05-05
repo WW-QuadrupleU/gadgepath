@@ -8,6 +8,14 @@ export const SITE_TOOLS = [
     label: '性能比較',
   },
   {
+    title: 'AIジャンル別性能比較',
+    description:
+      'ChatGPT、Claude、Gemini、Perplexityなどを、リサーチ、文章作成、コード、画像生成、議事録などの用途別に比較できます。',
+    href: '/tools/ai-model-compare',
+    icon: '/icons/ai.png',
+    label: 'AI比較',
+  },
+  {
     title: '機材・ガジェット検索',
     description:
       'マイク、カメラ、USBハブ、照明、ストレージなどをカテゴリや価格帯から探せます。',
