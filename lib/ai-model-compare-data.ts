@@ -1,12 +1,11 @@
 export type AiGenreId =
-  | 'overall'
   | 'research'
   | 'writing'
   | 'coding'
   | 'analysis'
+  | 'agent'
   | 'image'
   | 'video'
-  | 'cost'
 
 export type AiGenre = {
   id: AiGenreId
@@ -14,6 +13,7 @@ export type AiGenre = {
   shortLabel: string
   description: string
   primaryMetrics: string[]
+  sourceMetric: string
 }
 
 export type AiModel = {
@@ -28,7 +28,9 @@ export type AiModel = {
   speed: number
   japanese: number
   context: number
-  scores: Record<AiGenreId, number>
+  visibleIn: AiGenreId[]
+  performance: Record<AiGenreId, number>
+  costPerformance: Record<AiGenreId, number>
   strengths: string[]
   cautions: string[]
   bestFor: string
@@ -36,6 +38,7 @@ export type AiModel = {
   note: string
   rank?: number
   metric?: string
+  priceLabel?: string
   sourceUrl?: string
 }
 
@@ -51,70 +54,84 @@ export type AiModelComparePayload = {
 
 export const AI_GENRES: AiGenre[] = [
   {
-    id: 'overall',
-    label: '総合性能',
-    shortLabel: '総合',
-    description:
-      '推論、指示追従、公開ベンチマーク、速度、価格を横断した総合的な使いやすさの目安です。',
-    primaryMetrics: ['推論力', '指示追従', '安定性', '対応範囲'],
-  },
-  {
     id: 'research',
     label: 'リサーチ・情報整理',
     shortLabel: 'リサーチ',
     description:
-      '情報収集、出典確認、比較検討、長い資料の整理に向くかを評価します。',
-    primaryMetrics: ['情報整理', '出典確認', '長文読解', '比較検討'],
+      '情報収集、出典確認、比較検討、長い資料の整理に向くLLMを比較します。',
+    primaryMetrics: ['推論力', '長文読解', '出典確認', '情報整理'],
+    sourceMetric: 'Artificial Analysis Intelligence Indexを主な基準にしています。',
   },
   {
     id: 'writing',
     label: '文章作成・記事改善',
     shortLabel: '文章',
     description:
-      '日本語の自然さ、構成力、編集、トーン調整のしやすさを評価します。',
-    primaryMetrics: ['日本語品質', '構成力', '編集力', '表現調整'],
+      '記事作成、リライト、構成整理、トーン調整に向くLLMを比較します。',
+    primaryMetrics: ['推論力', '指示追従', '長文編集', '日本語運用'],
+    sourceMetric: 'Artificial Analysis Intelligence Indexを主な基準にしています。',
   },
   {
     id: 'coding',
     label: 'コード・開発補助',
     shortLabel: 'コード',
     description:
-      '実装、デバッグ、設計相談、既存コード読解に向くかを評価します。',
-    primaryMetrics: ['実装力', 'デバッグ', '設計相談', 'コード読解'],
+      '実装、デバッグ、設計相談、既存コード読解に向くLLMを比較します。',
+    primaryMetrics: ['Coding Index', '実装力', 'デバッグ', '設計相談'],
+    sourceMetric: 'Artificial Analysis Coding Indexを主な基準にしています。',
   },
   {
     id: 'analysis',
     label: 'データ分析・表計算',
     shortLabel: '分析',
     description:
-      'CSV、表計算、グラフ化、業務データの整理に向くかを評価します。',
-    primaryMetrics: ['表処理', '数値整理', 'グラフ化', '業務利用'],
+      '数値処理、表計算、グラフ化、業務データ整理に向くLLMを比較します。',
+    primaryMetrics: ['Math Index', '数値処理', '表計算', '推論力'],
+    sourceMetric: 'Artificial Analysis Math Indexを主な基準にしています。',
+  },
+  {
+    id: 'agent',
+    label: 'エージェント性能',
+    shortLabel: 'エージェント',
+    description:
+      'ツール実行、複数ステップの作業、長時間の自律タスクに向くLLMを比較します。',
+    primaryMetrics: ['Agentic Index', 'ツール利用', '長時間タスク', '指示追従'],
+    sourceMetric:
+      'Artificial Analysis Agentic Indexが取得できる場合はそれを優先し、未提供時はIntelligence/Coding系指標を補助的に使います。',
   },
   {
     id: 'image',
     label: '画像生成・デザイン',
     shortLabel: '画像',
     description:
-      '画像生成、サムネイル、記事用ビジュアル、デザイン案の作りやすさを評価します。',
-    primaryMetrics: ['画質', '編集性', '文字入れ', '商用運用'],
+      '画像生成、記事用ビジュアル、サムネイル、広告素材に向く画像モデルを比較します。',
+    primaryMetrics: ['Text to Image Elo', '画質', '指示追従', '商用運用'],
+    sourceMetric: 'Artificial Analysis Text to Image Eloを主な基準にしています。',
   },
   {
     id: 'video',
     label: '動画生成・映像制作',
     shortLabel: '動画',
     description:
-      '短尺動画、Bロール、SNS向け動画制作への向き不向きを評価します。',
-    primaryMetrics: ['映像品質', '操作性', '編集連携', '素材化'],
-  },
-  {
-    id: 'cost',
-    label: 'コスパ・速度',
-    shortLabel: 'コスパ',
-    description:
-      '応答速度、価格、日常利用の続けやすさを重視した評価です。',
-    primaryMetrics: ['価格', '速度', '軽さ', '日常利用'],
+      '短尺動画、Bロール、SNS向け動画素材に向く動画モデルを比較します。',
+    primaryMetrics: ['Text to Video Elo', '映像品質', '動き', '素材化'],
+    sourceMetric: 'Artificial Analysis Text to Video / Image to Video Eloを主な基準にしています。',
   },
 ]
+
+const ZERO_PERFORMANCE: Record<AiGenreId, number> = {
+  research: 0,
+  writing: 0,
+  coding: 0,
+  analysis: 0,
+  agent: 0,
+  image: 0,
+  video: 0,
+}
+
+function scores(values: Partial<Record<AiGenreId, number>>): Record<AiGenreId, number> {
+  return { ...ZERO_PERFORMANCE, ...values }
+}
 
 export const FALLBACK_UPDATED_AT = '2026-05-06T00:00:00.000+09:00'
 
@@ -124,17 +141,20 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'GPT-5.5 (xhigh)',
     creator: 'OpenAI',
     family: 'GPT',
-    releaseLabel: 'AA Intelligence上位',
+    releaseLabel: 'LLM',
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: 5,
     speed: 73,
     japanese: 92,
     context: 92,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: 1,
     metric: 'Intelligence Index 60',
+    priceLabel: '$11.25 / 1M tokens',
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: { overall: 100, research: 94, writing: 94, coding: 96, analysis: 96, image: 70, video: 45, cost: 58 },
+    performance: scores({ research: 100, writing: 100, coding: 96, analysis: 96, agent: 98 }),
+    costPerformance: scores({ research: 67, writing: 67, coding: 65, analysis: 65, agent: 66 }),
     strengths: ['総合推論が非常に強い', 'コード、分析、複雑な設計相談に向く', '難しい指示を粘り強く処理しやすい'],
     cautions: ['高コストで待ち時間も長め', '軽い要約や分類には過剰になりやすい'],
     bestFor: '難しい分析、コード、設計、記事改善の最終判断まで任せたい人。',
@@ -146,39 +166,45 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'GPT-5.5 (high)',
     creator: 'OpenAI',
     family: 'GPT',
-    releaseLabel: 'AA Intelligence上位',
+    releaseLabel: 'LLM',
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: 5,
     speed: 71,
     japanese: 92,
     context: 92,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: 2,
     metric: 'Intelligence Index 59',
+    priceLabel: '$11.25 / 1M tokens',
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: { overall: 98, research: 93, writing: 94, coding: 95, analysis: 95, image: 68, video: 44, cost: 60 },
+    performance: scores({ research: 98, writing: 98, coding: 95, analysis: 95, agent: 96 }),
+    costPerformance: scores({ research: 66, writing: 66, coding: 64, analysis: 64, agent: 65 }),
     strengths: ['xhighより扱いやすく高性能', '文章、コード、分析を横断しやすい', '汎用の上位比較軸にしやすい'],
     cautions: ['価格は高め', '速度だけなら軽量モデルも比較したい'],
     bestFor: '高性能を保ちつつ、xhighほど重くしたくない人。',
     avoidFor: '日常の軽作業だけを高速に回したい人。',
-    note: '高性能汎用モデルの比較基準です。',
+    note: '高性能LLMの比較基準です。',
   },
   {
     id: 'claude-opus-4-7-max',
     name: 'Claude Opus 4.7 (max)',
     creator: 'Anthropic',
     family: 'Claude Opus',
-    releaseLabel: 'AA Intelligence上位',
+    releaseLabel: 'LLM',
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: 4,
     speed: 47,
     japanese: 94,
     context: 95,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: 3,
     metric: 'Intelligence Index 57',
+    priceLabel: '$10.94 / 1M tokens',
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: { overall: 95, research: 88, writing: 97, coding: 94, analysis: 90, image: 35, video: 20, cost: 62 },
+    performance: scores({ research: 95, writing: 95, coding: 94, analysis: 90, agent: 94 }),
+    costPerformance: scores({ research: 65, writing: 65, coding: 64, analysis: 62, agent: 64 }),
     strengths: ['文章編集と長文読解に強い', '複雑な指示を保ちやすい', 'コードやエージェント用途でも上位候補'],
     cautions: ['速度は速さ重視ではない', '画像や動画生成は別ツールが必要'],
     bestFor: '長文記事、リライト、慎重な調査整理、コード相談。',
@@ -190,17 +216,20 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Gemini 3.1 Pro Preview',
     creator: 'Google',
     family: 'Gemini',
-    releaseLabel: 'AA Intelligence上位',
+    releaseLabel: 'LLM',
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: 3,
     speed: 137,
     japanese: 88,
     context: 98,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: 4,
     metric: 'Intelligence Index 57',
+    priceLabel: '$4.50 / 1M tokens',
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: { overall: 95, research: 96, writing: 88, coding: 91, analysis: 92, image: 72, video: 60, cost: 78 },
+    performance: scores({ research: 95, writing: 95, coding: 91, analysis: 92, agent: 93 }),
+    costPerformance: scores({ research: 82, writing: 82, coding: 80, analysis: 80, agent: 81 }),
     strengths: ['長文とリサーチに強い', '速度と価格のバランスがよい', 'Google系の作業導線と相性がよい'],
     cautions: ['Preview系は仕様が変わる可能性がある', '日本語の最終仕上げは好みが分かれる'],
     bestFor: 'リサーチ、資料整理、長文読解、Google環境中心の作業。',
@@ -212,17 +241,20 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Kimi K2.6',
     creator: 'Kimi',
     family: 'Kimi',
-    releaseLabel: 'コスパ上位',
+    releaseLabel: 'LLM',
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: 2,
     speed: 34,
     japanese: 74,
     context: 86,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: 6,
     metric: 'Intelligence Index 54',
+    priceLabel: '$1.71 / 1M tokens',
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: { overall: 90, research: 82, writing: 74, coding: 86, analysis: 84, image: 25, video: 15, cost: 88 },
+    performance: scores({ research: 90, writing: 90, coding: 86, analysis: 84, agent: 86 }),
+    costPerformance: scores({ research: 87, writing: 87, coding: 84, analysis: 83, agent: 84 }),
     strengths: ['性能に対して価格を抑えやすい', 'コードと分析の補助に向く', '上位勢との比較軸になる'],
     cautions: ['日本語記事の仕上げは確認したい', '一般ユーザー向けUIは別途確認が必要'],
     bestFor: 'コストと性能のバランスを重視する開発者。',
@@ -234,17 +266,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'GPT Image 2 (high)',
     creator: 'OpenAI',
     family: 'GPT Image',
-    releaseLabel: 'Text to Image上位',
+    releaseLabel: 'Text to Image',
     modality: 'Image',
     accessType: 'Specialized',
     costLevel: 4,
     speed: 55,
     japanese: 60,
     context: 40,
+    visibleIn: ['image'],
     rank: 1,
     metric: 'Text to Image Elo 1338',
     sourceUrl: 'https://artificialanalysis.ai/image/leaderboard/text-to-image',
-    scores: { overall: 70, research: 10, writing: 25, coding: 5, analysis: 5, image: 100, video: 45, cost: 58 },
+    performance: scores({ image: 100 }),
+    costPerformance: scores({ image: 76 }),
     strengths: ['画像生成品質が非常に高い', '記事用ビジュアルや商用寄りの素材に向く', '文字や指示追従も比較しやすい'],
     cautions: ['汎用チャットや調査用途ではない', '実在商品風の表現は権利面に注意'],
     bestFor: '記事ヒーロー、サムネイル、広告素材の画像生成。',
@@ -256,17 +290,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Nano Banana 2',
     creator: 'Google',
     family: 'Gemini Image',
-    releaseLabel: 'Text to Image上位',
+    releaseLabel: 'Text to Image',
     modality: 'Image',
     accessType: 'Specialized',
     costLevel: 2,
     speed: 70,
     japanese: 58,
     context: 40,
+    visibleIn: ['image'],
     rank: 3,
     metric: 'Text to Image Elo 1261',
     sourceUrl: 'https://artificialanalysis.ai/image/leaderboard/text-to-image',
-    scores: { overall: 66, research: 10, writing: 20, coding: 5, analysis: 5, image: 94, video: 40, cost: 82 },
+    performance: scores({ image: 94 }),
+    costPerformance: scores({ image: 87 }),
     strengths: ['画像品質とコストのバランスがよい', '指示への追従を期待しやすい', 'Google系の画像用途に入りやすい'],
     cautions: ['画像専用枠として考える', '商用利用条件は必ず確認したい'],
     bestFor: 'コスパ良く画像生成を試したい人。',
@@ -278,17 +314,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Kling 3.0 1080p (Pro)',
     creator: 'KlingAI',
     family: 'Kling',
-    releaseLabel: 'Text to Video上位',
+    releaseLabel: 'Text to Video',
     modality: 'Video',
     accessType: 'Specialized',
     costLevel: 4,
     speed: 45,
     japanese: 35,
     context: 30,
+    visibleIn: ['video'],
     rank: 3,
     metric: 'Text to Video Elo 1246',
     sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    scores: { overall: 68, research: 8, writing: 15, coding: 5, analysis: 5, image: 78, video: 96, cost: 56 },
+    performance: scores({ video: 96 }),
+    costPerformance: scores({ video: 72 }),
     strengths: ['動画生成の上位候補', '人物や動きのある映像で比較しやすい', 'Kling系の最新候補として重要'],
     cautions: ['価格は高め', '長尺や正確な商品再現は個別確認が必要'],
     bestFor: 'SNS動画、Bロール、動きのある短尺映像。',
@@ -300,17 +338,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Runway Gen-4.5',
     creator: 'Runway',
     family: 'Runway',
-    releaseLabel: 'Text to Video上位',
+    releaseLabel: 'Text to Video',
     modality: 'Video',
     accessType: 'Specialized',
     costLevel: 4,
     speed: 45,
     japanese: 38,
     context: 32,
+    visibleIn: ['video'],
     rank: 10,
     metric: 'Text to Video Elo 1215',
     sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    scores: { overall: 64, research: 8, writing: 16, coding: 5, analysis: 5, image: 80, video: 91, cost: 52 },
+    performance: scores({ video: 91 }),
+    costPerformance: scores({ video: 70 }),
     strengths: ['制作ツールとしての完成度が高い', '編集ワークフローに組み込みやすい', '映像制作者向けの選択肢'],
     cautions: ['単純な品質順位だけならKlingやVeoも比較したい', '料金体系と利用制限の確認が必要'],
     bestFor: '映像制作、SNS素材、編集込みの動画ワークフロー。',
@@ -322,17 +362,19 @@ export const FALLBACK_AI_MODELS: AiModel[] = [
     name: 'Veo 3.1',
     creator: 'Google',
     family: 'Veo',
-    releaseLabel: 'Text to Video上位',
+    releaseLabel: 'Text to Video',
     modality: 'Video',
     accessType: 'Specialized',
     costLevel: 4,
     speed: 45,
     japanese: 40,
     context: 32,
+    visibleIn: ['video'],
     rank: 14,
     metric: 'Text to Video Elo 1208',
     sourceUrl: 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    scores: { overall: 64, research: 8, writing: 15, coding: 5, analysis: 5, image: 79, video: 90, cost: 55 },
+    performance: scores({ video: 90 }),
+    costPerformance: scores({ video: 70 }),
     strengths: ['Google系動画生成の主力候補', '映像品質が高い', 'Veo系の比較軸として重要'],
     cautions: ['提供地域やプラン条件を確認したい', '細かな編集は外部ツール併用が前提になりやすい'],
     bestFor: '高品質な短尺動画や映像素材を作りたい人。',

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import {
   FALLBACK_AI_PAYLOAD,
+  type AiGenreId,
   type AiModel,
   type AiModelComparePayload,
 } from '@/lib/ai-model-compare-data'
@@ -12,16 +13,22 @@ type AaCreator = {
   slug?: string
 }
 
+type AaEvaluationMap = {
+  artificial_analysis_intelligence_index?: number
+  artificial_analysis_coding_index?: number
+  artificial_analysis_math_index?: number
+  artificial_analysis_agentic_index?: number
+  agentic_index?: number
+  apex_agents_aa?: number
+  [key: string]: number | undefined
+}
+
 type AaLlmModel = {
   id?: string
   name?: string
   slug?: string
   model_creator?: AaCreator
-  evaluations?: {
-    artificial_analysis_intelligence_index?: number
-    artificial_analysis_coding_index?: number
-    artificial_analysis_math_index?: number
-  }
+  evaluations?: AaEvaluationMap
   pricing?: {
     price_1m_blended_3_to_1?: number
     price_1m_input_tokens?: number
@@ -40,6 +47,11 @@ type AaMediaModel = {
   elo?: number
   rank?: number
   release_date?: string
+  pricing?: {
+    price_per_generation?: number
+    price_per_second?: number
+    price_per_minute?: number
+  }
 }
 
 type AaResponse<T> = {
@@ -49,6 +61,20 @@ type AaResponse<T> = {
 
 const AA_BASE_URL = 'https://artificialanalysis.ai/api/v2'
 const SOURCE_URL = 'https://artificialanalysis.ai/'
+
+const ZERO_PERFORMANCE: Record<AiGenreId, number> = {
+  research: 0,
+  writing: 0,
+  coding: 0,
+  analysis: 0,
+  agent: 0,
+  image: 0,
+  video: 0,
+}
+
+function scores(values: Partial<Record<AiGenreId, number>>): Record<AiGenreId, number> {
+  return { ...ZERO_PERFORMANCE, ...values }
+}
 
 function clamp(value: number, min = 0, max = 100): number {
   return Math.round(Math.max(min, Math.min(max, value)))
@@ -70,7 +96,7 @@ function costLevel(price?: number): 1 | 2 | 3 | 4 | 5 {
   return 5
 }
 
-function costScore(price?: number): number {
+function tokenCostScore(price?: number): number {
   if (price == null) return 70
   if (price <= 0.05) return 98
   if (price <= 0.2) return 94
@@ -81,13 +107,27 @@ function costScore(price?: number): number {
   return 48
 }
 
-function normalizeIntelligence(value?: number): number {
-  if (value == null) return 70
+function mediaCostScore(price?: number): number {
+  if (price == null) return 70
+  if (price <= 0.02) return 96
+  if (price <= 0.08) return 88
+  if (price <= 0.2) return 80
+  if (price <= 1) return 68
+  if (price <= 8) return 58
+  return 48
+}
+
+function costPerformanceScore(performance: number, cost: number): number {
+  return clamp(performance * 0.72 + cost * 0.28)
+}
+
+function normalizeIndex(value?: number): number {
+  if (value == null) return 0
   return clamp((value / 60) * 100)
 }
 
 function normalizeMedia(elo?: number, min = 1050, max = 1350): number {
-  if (elo == null) return 70
+  if (elo == null) return 0
   return clamp(50 + ((elo - min) / (max - min)) * 50)
 }
 
@@ -108,6 +148,15 @@ function llmFamily(name: string, creator: string): string {
   return creator || 'LLM'
 }
 
+function agenticIndex(evaluations?: AaEvaluationMap): number | undefined {
+  if (!evaluations) return undefined
+  return (
+    evaluations.artificial_analysis_agentic_index ??
+    evaluations.agentic_index ??
+    evaluations.apex_agents_aa
+  )
+}
+
 function mapLlmModel(model: AaLlmModel, index: number): AiModel | null {
   if (!model.name) return null
 
@@ -115,11 +164,15 @@ function mapLlmModel(model: AaLlmModel, index: number): AiModel | null {
   const intelligence = model.evaluations?.artificial_analysis_intelligence_index
   const coding = model.evaluations?.artificial_analysis_coding_index
   const math = model.evaluations?.artificial_analysis_math_index
+  const agent = agenticIndex(model.evaluations)
   const blendedPrice = model.pricing?.price_1m_blended_3_to_1
-  const overall = normalizeIntelligence(intelligence)
-  const codingScore = coding == null ? clamp(overall - 3) : normalizeIntelligence(coding)
-  const analysisScore = math == null ? clamp((overall + codingScore) / 2) : normalizeIntelligence(math)
-  const speed = speedScore(model.median_output_tokens_per_second)
+
+  const research = normalizeIndex(intelligence)
+  const writing = normalizeIndex(intelligence)
+  const codingScore = coding == null ? clamp(research - 3) : normalizeIndex(coding)
+  const analysis = math == null ? clamp((research + codingScore) / 2) : normalizeIndex(math)
+  const agentScore = agent == null ? clamp(research * 0.6 + codingScore * 0.4) : normalizeIndex(agent)
+  const cost = tokenCostScore(blendedPrice)
 
   return {
     id: model.id || model.slug || slugify(`${creator}-${model.name}`),
@@ -130,25 +183,31 @@ function mapLlmModel(model: AaLlmModel, index: number): AiModel | null {
     modality: 'LLM',
     accessType: 'Proprietary',
     costLevel: costLevel(blendedPrice),
-    speed,
+    speed: speedScore(model.median_output_tokens_per_second),
     japanese: /openai|anthropic|google/i.test(creator) ? 90 : 78,
     context: model.context_window ? clamp(Math.log10(model.context_window) * 22) : 84,
+    visibleIn: ['research', 'writing', 'coding', 'analysis', 'agent'],
     rank: index + 1,
     metric: intelligence == null ? undefined : `Intelligence Index ${Math.round(intelligence)}`,
+    priceLabel: blendedPrice == null ? undefined : `$${blendedPrice.toFixed(2)} / 1M tokens`,
     sourceUrl: 'https://artificialanalysis.ai/leaderboards/models',
-    scores: {
-      overall,
-      research: clamp(overall - 2),
-      writing: clamp(overall - (/anthropic/i.test(creator) ? -2 : 4)),
+    performance: scores({
+      research,
+      writing,
       coding: codingScore,
-      analysis: analysisScore,
-      image: 35,
-      video: 20,
-      cost: costScore(blendedPrice),
-    },
-    strengths: ['公開ベンチマークで比較しやすい', '文章、コード、分析の基準モデルとして使いやすい'],
+      analysis,
+      agent: agentScore,
+    }),
+    costPerformance: scores({
+      research: costPerformanceScore(research, cost),
+      writing: costPerformanceScore(writing, cost),
+      coding: costPerformanceScore(codingScore, cost),
+      analysis: costPerformanceScore(analysis, cost),
+      agent: costPerformanceScore(agentScore, cost),
+    }),
+    strengths: ['公開ベンチマークで比較しやすい', '文章、コード、分析、エージェント用途の候補として見やすい'],
     cautions: ['用途別の体感はUI、プラン、ツール連携でも変わります', '最新情報や商用条件は公式ページで確認してください'],
-    bestFor: '文章、調査、コード、分析などの汎用AI作業。',
+    bestFor: '文章、調査、コード、分析、エージェント的な作業。',
     avoidFor: '画像生成や動画生成を主目的にする用途。',
     note: 'Artificial AnalysisのLLM指標をもとに自動反映しています。',
   }
@@ -165,12 +224,23 @@ function mediaFamily(name: string, creator: string): string {
   return creator || 'Media'
 }
 
+function mediaPrice(model: AaMediaModel): number | undefined {
+  return (
+    model.pricing?.price_per_generation ??
+    model.pricing?.price_per_minute ??
+    model.pricing?.price_per_second
+  )
+}
+
 function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRank: number): AiModel | null {
   if (!model.name) return null
 
   const creator = model.model_creator?.name || 'Unknown'
-  const score = type === 'image' ? normalizeMedia(model.elo, 1050, 1350) : normalizeMedia(model.elo, 1050, 1400)
+  const performance = type === 'image' ? normalizeMedia(model.elo, 1050, 1350) : normalizeMedia(model.elo, 1050, 1400)
   const rank = model.rank ?? fallbackRank
+  const price = mediaPrice(model)
+  const cost = mediaCostScore(price)
+  const genre: AiGenreId = type === 'image' ? 'image' : 'video'
 
   return {
     id: `${type}-${model.id || model.slug || slugify(`${creator}-${model.name}`)}`,
@@ -180,26 +250,20 @@ function mapMediaModel(model: AaMediaModel, type: 'image' | 'video', fallbackRan
     releaseLabel: model.release_date ? `Released ${model.release_date}` : type === 'image' ? 'Text to Image' : 'Text to Video',
     modality: type === 'image' ? 'Image' : 'Video',
     accessType: 'Specialized',
-    costLevel: 3,
+    costLevel: price == null ? 3 : costLevel(price),
     speed: 55,
     japanese: 45,
     context: 35,
+    visibleIn: [genre],
     rank,
     metric: model.elo == null ? undefined : `Elo ${Math.round(model.elo)}`,
+    priceLabel: price == null ? '価格情報なし' : type === 'image' ? `$${price}` : `$${price} / min`,
     sourceUrl:
       type === 'image'
         ? 'https://artificialanalysis.ai/image/leaderboard/text-to-image'
         : 'https://artificialanalysis.ai/video/leaderboard/text-to-video',
-    scores: {
-      overall: clamp(score * 0.7),
-      research: 8,
-      writing: 18,
-      coding: 5,
-      analysis: 5,
-      image: type === 'image' ? score : clamp(score * 0.8),
-      video: type === 'video' ? score : clamp(score * 0.45),
-      cost: 65,
-    },
+    performance: scores({ [genre]: performance }),
+    costPerformance: scores({ [genre]: costPerformanceScore(performance, cost) }),
     strengths: [
       type === 'image' ? '画像生成品質の比較に使いやすい' : '動画生成品質の比較に使いやすい',
       'Eloベースで順位を追いやすい',
@@ -259,21 +323,21 @@ export async function GET() {
           (b.evaluations?.artificial_analysis_intelligence_index ?? 0) -
           (a.evaluations?.artificial_analysis_intelligence_index ?? 0)
       )
-      .slice(0, 24)
+      .slice(0, 80)
       .map(mapLlmModel)
       .filter((model): model is AiModel => Boolean(model))
 
     const imageModels = images
       .filter((model) => model.elo != null)
       .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
-      .slice(0, 16)
+      .slice(0, 30)
       .map((model, index) => mapMediaModel(model, 'image', index + 1))
       .filter((model): model is AiModel => Boolean(model))
 
     const videoModels = [...textVideos, ...imageVideos]
       .filter((model) => model.elo != null)
       .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999))
-      .slice(0, 24)
+      .slice(0, 40)
       .map((model, index) => mapMediaModel(model, 'video', index + 1))
       .filter((model): model is AiModel => Boolean(model))
 
