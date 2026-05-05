@@ -4,7 +4,7 @@ import { getPublishedArticles } from '@/lib/notion'
 import { CATEGORIES } from '@/lib/notion'
 import ArticleCard from '@/components/ArticleCard'
 
-export const revalidate = 604800
+export const revalidate = 3600
 
 export default async function HomePage() {
   const articles = await getPublishedArticles().catch(() => [])

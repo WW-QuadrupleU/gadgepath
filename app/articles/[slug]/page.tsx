@@ -13,7 +13,7 @@ import remarkGfm from 'remark-gfm'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export const revalidate = 604800
+export const revalidate = 3600
 
 type Props = {
   params: Promise<{ slug: string }>

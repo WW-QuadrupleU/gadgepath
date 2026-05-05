@@ -4,7 +4,7 @@ import ArticleCard from '@/components/ArticleCard'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export const revalidate = 604800
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: '記事一覧',
