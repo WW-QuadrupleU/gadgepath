@@ -4,7 +4,7 @@ import DeskSimulator from '@/components/DeskSimulator'
 export const metadata: Metadata = {
   title: 'デスクレイアウトシミュレーター',
   description:
-    'モニター・PC・マイク・スピーカー・ゲーム機などをドラッグ＆ドロップでデスク上に配置できる無料シミュレーター。実寸スケールで配置感を事前にチェックできます。',
+    'モニター・PC・マイク・スピーカー・ゲーム機などを斜め俯瞰の3Dビューで配置できるシミュレーター。ライティングも切替えてデスク環境のイメージを膨らませられます。',
 }
 
 export const revalidate = 604800
@@ -18,9 +18,10 @@ export default function DeskSimulatorPage() {
           🪑 デスクレイアウトシミュレーター
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-gray-500">
-          デスクサイズを選び、モニター・PC・マイク・スピーカー・ゲーム機などをドラッグで配置。
-          実寸スケールで「これ置ける？」を事前にチェックできます。
-          作成したレイアウトはURLでシェア可能です。
+          デスクサイズを選び、モニター・PC・マイク・スピーカー・ゲーム機などを
+          <strong className="text-brand-text">斜め俯瞰の3Dビュー</strong>で配置。
+          ライティングを切り替えて「うちの机にこれ置いたらどう見える？」を
+          イメージしながら検討できます。レイアウトはURLでシェア可能です。
         </p>
       </header>
 
@@ -29,14 +30,15 @@ export default function DeskSimulatorPage() {
       <section className="mt-10 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="mb-3 text-base font-bold text-brand-text">使い方</h2>
         <ol className="list-decimal space-y-1 pl-6 text-sm leading-relaxed text-gray-600">
-          <li>「デスクサイズ」プルダウンから自分のデスク幅・奥行きに近いものを選択</li>
+          <li>「デスクサイズ」と「ライティング」を選択</li>
           <li>「アイテムを追加」で必要なものをクリックして追加</li>
           <li>追加されたアイテムをドラッグで好きな位置に配置</li>
           <li>選択中のアイテムは「90°回転」「削除」が可能</li>
           <li>「URLで共有」で現在のレイアウトをURLでシェア</li>
         </ol>
         <p className="mt-3 text-xs text-gray-400">
-          ※ 寸法は一般的なモデルの参考値です。実際の購入前は商品ページの正確なサイズをご確認ください。
+          ※ 寸法・形状は一般的なモデルを簡略化した参考値です。配置感のイメージを掴むためのツールであり、
+          厳密なサイズチェックには商品ページの正確な仕様をご確認ください。
         </p>
       </section>
     </main>
