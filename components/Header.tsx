@@ -26,6 +26,9 @@ export default function Header() {
             <Link href="/tools/free-games" className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
               <span>🎮</span><span className="hidden sm:inline"> 無料ゲーム</span>
             </Link>
+            <Link href="/tools/spec-compare" className="flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-white/20 hover:border-brand-green hover:text-brand-green hover:bg-brand-green/10 transition-all duration-200">
+              <span>PC</span><span className="hidden sm:inline"> 性能比較</span>
+            </Link>
             <Link href="/articles" className="px-3 py-1.5 rounded-full bg-brand-green text-white hover:bg-brand-green/80 transition-all duration-200">
               記事一覧
             </Link>
