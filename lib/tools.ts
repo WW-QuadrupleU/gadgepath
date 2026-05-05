@@ -7,6 +7,13 @@ export const SITE_TOOLS = [
     label: '性能比較',
   },
   {
+    title: 'デスクレイアウトシミュレーター',
+    description: 'モニター・PC・マイク・スピーカー・ゲーム機などをドラッグで配置。実寸スケールで配置感をチェックできます。',
+    href: '/tools/desk-simulator',
+    icon: '/icons/desk-simulator.png',
+    label: 'レイアウト',
+  },
+  {
     title: '機材・ガジェット検索',
     description: 'マイク、カメラ、USBハブ、照明、ストレージなどをカテゴリや価格帯から探せます。',
     href: '/tools/gear-finder',
