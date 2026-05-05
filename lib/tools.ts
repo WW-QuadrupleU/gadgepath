@@ -8,9 +8,9 @@ export const SITE_TOOLS = [
     label: '性能比較',
   },
   {
-    title: 'AIジャンル別性能比較',
+    title: 'AIモデル用途別性能比較',
     description:
-      'ChatGPT、Claude、Gemini、Perplexityなどを、リサーチ、文章作成、コード、画像生成、議事録などの用途別に比較できます。',
+      'GPT、Claude、GeminiなどのAIモデルを、リサーチ、文章作成、コード、分析、画像生成、動画生成、コスパの用途別に比較できます。',
     href: '/tools/ai-model-compare',
     icon: '/icons/ai.png',
     label: 'AI比較',

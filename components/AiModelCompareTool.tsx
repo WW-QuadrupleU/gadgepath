@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react'
 import {
   AI_COMPARE_NOTE,
   AI_GENRES,
-  AI_SERVICES,
+  AI_MODELS,
   type AiGenreId,
-  type AiService,
+  type AiModel,
 } from '@/lib/ai-model-compare-data'
 
 function scoreTone(score: number): string {
@@ -24,8 +24,9 @@ function percent(score: number): number {
   return Math.max(6, Math.min(100, score))
 }
 
-function bestUse(service: AiService): string {
-  const sorted = Object.entries(service.scores)
+function bestUse(model: AiModel): string {
+  const sorted = Object.entries(model.scores)
+    .filter(([id]) => id !== 'overall')
     .sort((a, b) => b[1] - a[1])
     .slice(0, 2)
     .map(([id]) => AI_GENRES.find((genre) => genre.id === id)?.shortLabel)
@@ -33,7 +34,7 @@ function bestUse(service: AiService): string {
   return sorted.join(' / ')
 }
 
-function ServiceSelect({
+function ModelSelect({
   label,
   value,
   onChange,
@@ -42,8 +43,8 @@ function ServiceSelect({
   value: string
   onChange: (value: string) => void
 }) {
-  const groups = AI_SERVICES.reduce<Record<string, AiService[]>>((acc, service) => {
-    acc[service.category] = [...(acc[service.category] || []), service]
+  const groups = AI_MODELS.reduce<Record<string, AiModel[]>>((acc, model) => {
+    acc[model.family] = [...(acc[model.family] || []), model]
     return acc
   }, {})
 
@@ -55,11 +56,11 @@ function ServiceSelect({
         onChange={(event) => onChange(event.target.value)}
         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-brand-text outline-none transition-colors focus:border-brand-green"
       >
-        {Object.entries(groups).map(([category, services]) => (
-          <optgroup key={category} label={category}>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name}
+        {Object.entries(groups).map(([family, models]) => (
+          <optgroup key={family} label={family}>
+            {models.map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name}
               </option>
             ))}
           </optgroup>
@@ -83,34 +84,7 @@ function ScoreBar({ label, score }: { label: string; score: number }) {
   )
 }
 
-function RankingCard({ service, genreId, rank }: { service: AiService; genreId: AiGenreId; rank: number }) {
-  const score = service.scores[genreId]
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-black text-brand-green">#{rank} {service.category}</p>
-          <h3 className="text-lg font-extrabold text-brand-text">{service.name}</h3>
-          <p className="text-xs text-gray-400">{service.provider}</p>
-        </div>
-        <div className="rounded-lg bg-brand-dark px-3 py-2 text-center text-white">
-          <p className="text-[10px] font-bold text-gray-300">SCORE</p>
-          <p className="text-xl font-black">{score}</p>
-        </div>
-      </div>
-      <ScoreBar label="選択ジャンル適性" score={score} />
-      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-        <MiniStat label="速度" value={service.speed} />
-        <MiniStat label="日本語" value={service.japanese} />
-        <MiniStat label="文脈" value={service.context} />
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-gray-600">{service.bestFor}</p>
-      <p className="mt-2 text-xs leading-relaxed text-gray-400">{service.note}</p>
-    </div>
-  )
-}
-
-function MiniStat({ label, value }: { label: string; value: number }) {
+function MiniStat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-md bg-gray-50 px-2 py-2 text-center">
       <p className="text-[10px] font-bold text-gray-400">{label}</p>
@@ -119,30 +93,30 @@ function MiniStat({ label, value }: { label: string; value: number }) {
   )
 }
 
-function ServiceSummary({ service }: { service: AiService }) {
+function RankingCard({ model, genreId, rank }: { model: AiModel; genreId: AiGenreId; rank: number }) {
+  const score = model.scores[genreId]
+
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-black text-brand-green">{service.provider} / {service.category}</p>
-          <h3 className="text-lg font-extrabold text-brand-text">{service.name}</h3>
-          <p className="mt-1 text-xs text-gray-400">得意: {bestUse(service)} / コスト感: {costLabel(service.costLevel)}</p>
+          <p className="text-xs font-black text-brand-green">#{rank} {model.family}</p>
+          <h3 className="text-lg font-extrabold text-brand-text">{model.name}</h3>
+          <p className="text-xs text-gray-400">{model.creator} / {model.releaseLabel}</p>
+        </div>
+        <div className="rounded-lg bg-brand-dark px-3 py-2 text-center text-white">
+          <p className="text-[10px] font-bold text-gray-300">SCORE</p>
+          <p className="text-xl font-black">{score}</p>
         </div>
       </div>
-      <div className="grid gap-3">
-        {AI_GENRES.map((genre) => (
-          <ScoreBar key={genre.id} label={genre.shortLabel} score={service.scores[genre.id]} />
-        ))}
+      <ScoreBar label="選択ジャンル適性" score={score} />
+      <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+        <MiniStat label="速度" value={model.speed} />
+        <MiniStat label="日本語" value={model.japanese} />
+        <MiniStat label="文脈" value={model.context} />
       </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <TextPanel title="強み" items={service.strengths} tone="green" />
-        <TextPanel title="注意点" items={service.cautions} tone="amber" />
-      </div>
-      <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs leading-relaxed text-gray-500">
-        <span className="font-bold text-brand-text">向いている人：</span>{service.bestFor}
-        <br />
-        <span className="font-bold text-brand-text">向きにくい人：</span>{service.avoidFor}
-      </div>
+      <p className="mt-3 text-sm leading-relaxed text-gray-600">{model.bestFor}</p>
+      <p className="mt-2 text-xs leading-relaxed text-gray-400">{model.note}</p>
     </div>
   )
 }
@@ -160,30 +134,64 @@ function TextPanel({ title, items, tone }: { title: string; items: string[]; ton
   )
 }
 
+function ModelSummary({ model }: { model: AiModel }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-black text-brand-green">{model.creator} / {model.family}</p>
+          <h3 className="text-lg font-extrabold text-brand-text">{model.name}</h3>
+          <p className="mt-1 text-xs text-gray-400">
+            得意: {bestUse(model)} / コスト感: {costLabel(model.costLevel)}
+          </p>
+          {model.benchmarkNote && (
+            <p className="mt-2 text-xs leading-relaxed text-gray-500">{model.benchmarkNote}</p>
+          )}
+        </div>
+      </div>
+      <div className="grid gap-3">
+        {AI_GENRES.map((genre) => (
+          <ScoreBar key={genre.id} label={genre.shortLabel} score={model.scores[genre.id]} />
+        ))}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <TextPanel title="強み" items={model.strengths} tone="green" />
+        <TextPanel title="注意点" items={model.cautions} tone="amber" />
+      </div>
+      <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs leading-relaxed text-gray-500">
+        <span className="font-bold text-brand-text">向いている人：</span>{model.bestFor}
+        <br />
+        <span className="font-bold text-brand-text">向きにくい人：</span>{model.avoidFor}
+      </div>
+    </div>
+  )
+}
+
 export default function AiModelCompareTool() {
   const [genreId, setGenreId] = useState<AiGenreId>('research')
-  const [firstId, setFirstId] = useState('chatgpt')
-  const [secondId, setSecondId] = useState('claude')
+  const [firstId, setFirstId] = useState('gpt-5-4')
+  const [secondId, setSecondId] = useState('claude-opus-4-6')
 
   const genre = AI_GENRES.find((item) => item.id === genreId) ?? AI_GENRES[0]
   const ranking = useMemo(
-    () => [...AI_SERVICES].sort((a, b) => b.scores[genreId] - a.scores[genreId]),
+    () => [...AI_MODELS].sort((a, b) => b.scores[genreId] - a.scores[genreId]),
     [genreId]
   )
-  const first = AI_SERVICES.find((service) => service.id === firstId) ?? AI_SERVICES[0]
-  const second = AI_SERVICES.find((service) => service.id === secondId) ?? AI_SERVICES[1]
-  const winner = first.scores[genreId] === second.scores[genreId]
-    ? 'ほぼ同等'
-    : first.scores[genreId] > second.scores[genreId]
-      ? first.name
-      : second.name
+  const first = AI_MODELS.find((model) => model.id === firstId) ?? AI_MODELS[0]
+  const second = AI_MODELS.find((model) => model.id === secondId) ?? AI_MODELS[1]
+  const winner =
+    first.scores[genreId] === second.scores[genreId]
+      ? 'ほぼ同等'
+      : first.scores[genreId] > second.scores[genreId]
+        ? first.name
+        : second.name
 
   return (
     <div className="space-y-8">
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-4">
-          <p className="text-xs font-black text-brand-green">Genre Ranking</p>
-          <h2 className="text-xl font-extrabold text-brand-text">用途を選んでAIの向き不向きを見る</h2>
+          <p className="text-xs font-black text-brand-green">Model Ranking</p>
+          <h2 className="text-xl font-extrabold text-brand-text">用途を選んでAIモデルの向き不向きを見る</h2>
           <p className="mt-2 text-sm leading-relaxed text-gray-500">{genre.description}</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-4">
@@ -212,37 +220,37 @@ export default function AiModelCompareTool() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
-        {ranking.slice(0, 3).map((service, index) => (
-          <RankingCard key={service.id} service={service} genreId={genreId} rank={index + 1} />
+        {ranking.slice(0, 3).map((model, index) => (
+          <RankingCard key={model.id} model={model} genreId={genreId} rank={index + 1} />
         ))}
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
-            <ServiceSelect label="比較するAI 1" value={firstId} onChange={setFirstId} />
+            <ModelSelect label="比較するモデル 1" value={firstId} onChange={setFirstId} />
           </div>
           <div className="flex-1">
-            <ServiceSelect label="比較するAI 2" value={secondId} onChange={setSecondId} />
+            <ModelSelect label="比較するモデル 2" value={secondId} onChange={setSecondId} />
           </div>
-          <div className="rounded-lg bg-brand-dark px-4 py-3 text-white sm:w-40">
-            <p className="text-[10px] font-bold text-gray-300">選択ジャンル</p>
+          <div className="rounded-lg bg-brand-dark px-4 py-3 text-white sm:w-44">
+            <p className="text-[10px] font-bold text-gray-300">選択ジャンルの優位</p>
             <p className="text-sm font-black">{winner}</p>
           </div>
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
-          <ServiceSummary service={first} />
-          <ServiceSummary service={second} />
+          <ModelSummary model={first} />
+          <ModelSummary model={second} />
         </div>
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-        <h2 className="text-lg font-extrabold text-brand-text">全AIの用途別スコア</h2>
+        <h2 className="text-lg font-extrabold text-brand-text">全モデルの用途別スコア</h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-sm">
+          <table className="w-full min-w-[860px] border-collapse text-sm">
             <thead>
               <tr className="border-b border-gray-200 text-left text-xs text-gray-400">
-                <th className="py-2 pr-3">AI</th>
+                <th className="py-2 pr-3">モデル</th>
                 {AI_GENRES.map((item) => (
                   <th key={item.id} className="px-3 py-2 text-right">{item.shortLabel}</th>
                 ))}
@@ -250,18 +258,18 @@ export default function AiModelCompareTool() {
               </tr>
             </thead>
             <tbody>
-              {AI_SERVICES.map((service) => (
-                <tr key={service.id} className="border-b border-gray-100">
+              {AI_MODELS.map((model) => (
+                <tr key={model.id} className="border-b border-gray-100">
                   <td className="py-3 pr-3">
-                    <p className="font-black text-brand-text">{service.name}</p>
-                    <p className="text-xs text-gray-400">{service.category}</p>
+                    <p className="font-black text-brand-text">{model.name}</p>
+                    <p className="text-xs text-gray-400">{model.creator} / {model.releaseLabel}</p>
                   </td>
                   {AI_GENRES.map((item) => (
                     <td key={item.id} className="px-3 py-3 text-right font-bold text-brand-text">
-                      {service.scores[item.id]}
+                      {model.scores[item.id]}
                     </td>
                   ))}
-                  <td className="px-3 py-3 text-right text-xs font-bold text-gray-500">{costLabel(service.costLevel)}</td>
+                  <td className="px-3 py-3 text-right text-xs font-bold text-gray-500">{costLabel(model.costLevel)}</td>
                 </tr>
               ))}
             </tbody>
@@ -269,7 +277,18 @@ export default function AiModelCompareTool() {
         </div>
       </section>
 
-      <p className="rounded-lg bg-gray-100 p-4 text-xs leading-relaxed text-gray-500">{AI_COMPARE_NOTE}</p>
+      <p className="rounded-lg bg-gray-100 p-4 text-xs leading-relaxed text-gray-500">
+        {AI_COMPARE_NOTE}{' '}
+        参考データ元：
+        <a
+          href="https://artificialanalysis.ai/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-bold text-brand-green underline underline-offset-2"
+        >
+          Artificial Analysis
+        </a>
+      </p>
     </div>
   )
 }
