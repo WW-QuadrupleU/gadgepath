@@ -23,6 +23,7 @@ const NON_PRODUCT_ARTICLE_SLUGS = new Set([
   'chatgpt-gemini-claude-comparison-2026',
   'claude-creative-connectors',
   'macro-pad-guide-2026',
+  'usb-bandwidth-guide-2026',
   'xchat-review-2026',
 ])
 
