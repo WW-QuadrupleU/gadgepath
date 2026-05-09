@@ -16,6 +16,14 @@ export const SITE_TOOLS = [
     label: 'AI比較',
   },
   {
+    title: 'スマートフォン スペック・料金比較',
+    description:
+      'iPhone、Pixel、Galaxyなどの価格、カメラ、電池持ち、性能、重量、アップデート年数を用途別に比較できます。',
+    href: '/tools/smartphone-compare',
+    icon: '/icons/gear-search.png',
+    label: 'スマホ比較',
+  },
+  {
     title: '機材・ガジェット検索',
     description:
       'マイク、カメラ、USBハブ、照明、ストレージなどをカテゴリや価格帯から探せます。',
