@@ -25,6 +25,8 @@ const NON_PRODUCT_ARTICLE_SLUGS = new Set([
   'macro-pad-guide-2026',
   'usb-bandwidth-guide-2026',
   'xchat-review-2026',
+  'obs-quality-settings-guide-2026',
+  'streaming-beginner-unnecessary-gear-2026',
 ])
 
 export async function generateStaticParams() {
