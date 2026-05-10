@@ -24,6 +24,7 @@ const priorities: { id: Priority; label: string; hint: string; buyer: string }[]
 ]
 
 const budgetPresets = [
+  { label: '5万円まで', value: 50000 },
   { label: '10万円まで', value: 100000 },
   { label: '15万円まで', value: 150000 },
   { label: '20万円まで', value: 200000 },
@@ -309,7 +310,7 @@ function RankingList({ phones, priority }: { phones: SmartphoneSpec[]; priority:
         <h2 className="text-base font-extrabold text-brand-text">ランキング</h2>
         <p className="text-xs font-bold text-gray-400">{ranked.length}機種</p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 lg:max-h-[62vh] lg:overflow-y-auto lg:pr-1">
         {ranked.map((phone, index) => {
           const score = scorePhone(phone, priority)
           return (
@@ -415,6 +416,7 @@ export default function SmartphoneCompareTool({ phones = SMARTPHONE_DATA }: { ph
   const right = selectable.find((phone) => phone.id === rightId && phone.id !== left.id) ?? selectable.find((phone) => phone.id !== left.id) ?? selectable[0]
   const activePriority = priorities.find((item) => item.id === priority) ?? priorities[0]
   const visiblePhones = filtered.length ? filtered : phones
+  const isCheapBudget = maxPrice <= 50000
 
   return (
     <div className="space-y-6">
@@ -448,7 +450,7 @@ export default function SmartphoneCompareTool({ phones = SMARTPHONE_DATA }: { ph
           <div className="grid gap-4 md:grid-cols-[1fr_220px] md:items-center">
             <input
               type="range"
-              min="90000"
+              min="30000"
               max="350000"
               step="10000"
               value={maxPrice}
@@ -499,27 +501,36 @@ export default function SmartphoneCompareTool({ phones = SMARTPHONE_DATA }: { ph
             条件に合う機種が少ないため、比較候補は全機種から表示しています。予算上限を上げるか、メーカー・望遠・軽さ条件を外すと候補を増やせます。
           </div>
         ) : null}
+        {isCheapBudget && filtered.length >= 2 ? (
+          <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold leading-relaxed text-emerald-950">
+            5万円まででは、処理性能よりも電池持ち、防水、おサイフ、重量の差が選びどころです。ランキングは安さだけでなく普段使いの満足度も加味しています。
+          </div>
+        ) : null}
       </section>
 
-      <RecommendationList phones={visiblePhones} priority={priority} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div className="space-y-6">
+          <RecommendationList phones={visiblePhones} priority={priority} />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <SelectPhone label="スマホ 1" value={left.id} phones={selectable} onChange={setLeftId} />
-        <SelectPhone label="スマホ 2" value={right.id} phones={selectable} onChange={setRightId} />
-      </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <SelectPhone label="スマホ 1" value={left.id} phones={selectable} onChange={setLeftId} />
+            <SelectPhone label="スマホ 2" value={right.id} phones={selectable} onChange={setRightId} />
+          </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <PhoneSummary phone={left} priority={priority} />
-        <PhoneSummary phone={right} priority={priority} />
-      </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PhoneSummary phone={left} priority={priority} />
+            <PhoneSummary phone={right} priority={priority} />
+          </div>
 
-      <DecisionPanel left={left} right={right} priority={priority} />
+          <DecisionPanel left={left} right={right} priority={priority} />
 
-      <CompareBars left={left} right={right} priority={priority} />
+          <CompareBars left={left} right={right} priority={priority} />
+        </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <RankingList phones={visiblePhones} priority={priority} />
-        <Sources phones={visiblePhones} />
+        <aside className="space-y-4 lg:sticky lg:top-4">
+          <RankingList phones={visiblePhones} priority={priority} />
+          <Sources phones={visiblePhones} />
+        </aside>
       </div>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-900">
