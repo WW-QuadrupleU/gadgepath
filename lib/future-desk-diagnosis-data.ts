@@ -236,7 +236,7 @@ export const DESK_TYPES: DeskType[] = [
     recommendedCategories: ['照明', 'キーボード', 'チェア', 'デスクマット'],
     relatedLinks: [
       { label: '機材検索で探す', href: '/tools/gear-finder' },
-      { label: 'スマホ比較を見る', href: '/tools/smartphone-compare' },
+      { label: 'デスクシミュレーターを使う', href: '/tools/desk-simulator' },
     ],
     imagePath: '/images/tools/future-desk-diagnosis/cozy-minimalist.jpeg',
     imagePrompt: 'A cute cozy cafe-style future desk illustration, warm beige and white tones, soft desk lamp, minimal gadgets, friendly Japanese personality quiz result card style, charming and modern, no text',
@@ -343,9 +343,9 @@ export const DESK_TYPES: DeskType[] = [
     firstInvestment: '主役ガジェットを1つ決めること',
     buyOrder: ['主役にしたいガジェット', '見せる収納', '電源まわり', 'サブ機材', 'レビュー用メモ環境'],
     avoid: ['目的が同じ機材の買い増し', '置き場所を決めない購入', '初期設定が重いものの積み上げ'],
-    recommendedCategories: ['新製品', 'スマホ', 'AIモデル', 'デスク小物'],
+    recommendedCategories: ['新製品', 'デスク小物', 'AIモデル', '見せる収納'],
     relatedLinks: [
-      { label: 'スマホ比較を見る', href: '/tools/smartphone-compare' },
+      { label: '機材検索で探す', href: '/tools/gear-finder' },
       { label: 'AIモデル比較を見る', href: '/tools/ai-model-compare' },
     ],
     imagePath: '/images/tools/future-desk-diagnosis/romance-hunter.jpeg',
