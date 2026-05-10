@@ -36,38 +36,30 @@ export default async function HomePage() {
             Gadgepath Tools & Guides
           </p>
           <h1 className="max-w-3xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            ガジェット選びを、迷いから確信へ。
+            目的に合うガジェットを、ツールで整理する。
           </h1>
           <p className="mt-5 max-w-2xl text-sm leading-relaxed text-gray-200 sm:text-base">
-            PC、スマホ、配信機材、AIツールまで。スペック・価格・用途を横断して、いま選ぶべきものを整理できます。
+            PC、スマホ、配信機材、AIツールまで。スペック・価格・用途を横断して、選ぶ前に見ておきたい情報をまとめています。
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              href="/tools/future-desk-diagnosis"
+              href="/tools"
               className="rounded-lg bg-brand-green px-5 py-3 text-sm font-black text-brand-dark shadow-lg shadow-brand-green/20 transition hover:bg-lime-300"
             >
-              未来デスク診断をはじめる
+              ツール一覧を見る
             </Link>
             <Link
-              href="/tools"
+              href="/articles"
               className="rounded-lg border border-white/30 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:border-brand-green hover:text-brand-green"
             >
-              ツールを見る
+              記事を読む
             </Link>
           </div>
-          <div className="mt-10 grid max-w-3xl grid-cols-3 gap-3 border-t border-white/15 pt-5 text-xs text-gray-300">
-            <div>
-              <p className="text-lg font-black text-white">{SITE_TOOLS.length}</p>
-              <p className="mt-1">無料ツール</p>
-            </div>
-            <div>
-              <p className="text-lg font-black text-white">{articles.length}</p>
-              <p className="mt-1">公開記事</p>
-            </div>
-            <div>
-              <p className="text-lg font-black text-white">用途別</p>
-              <p className="mt-1">比較・診断</p>
-            </div>
+          <div className="mt-10 flex max-w-3xl flex-wrap gap-2 border-t border-white/15 pt-5 text-xs font-bold text-gray-200">
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">性能比較</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">価格チェック</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">機材検索</span>
+            <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5">用途別ガイド</span>
           </div>
         </div>
       </section>
