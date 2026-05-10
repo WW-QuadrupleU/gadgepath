@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { getPublishedArticles } from '@/lib/notion'
 import { SITE_TOOLS } from '@/lib/tools'
 import ArticleCard from '@/components/ArticleCard'
+import ToolCard from '@/components/ToolCard'
 
 export const revalidate = 3600
 
@@ -16,60 +17,90 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const articles = await getPublishedArticles().catch(() => [])
   const recent = articles.slice(0, 9)
+  const featuredTools = SITE_TOOLS.slice(0, 3)
 
   return (
     <>
-      <section className="bg-brand-dark px-4 py-12 text-white">
-        <div className="mx-auto max-w-5xl">
+      <section className="relative overflow-hidden bg-brand-dark px-4 py-14 text-white sm:py-18">
+        <Image
+          src="/images/tools/future-desk-diagnosis/quiet-optimizer.jpeg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-30"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand-dark via-brand-dark/88 to-brand-dark/55" />
+        <div className="relative mx-auto max-w-5xl">
           <p className="mb-3 text-xs font-black uppercase tracking-wider text-brand-green">
-            Gadgepath Tools
+            Gadgepath Tools & Guides
           </p>
-          <h1 className="max-w-3xl text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-            PC・配信環境を整理する無料ツール集
+          <h1 className="max-w-3xl text-3xl font-extrabold leading-tight tracking-tight sm:text-5xl">
+            ガジェット選びを、迷いから確信へ。
           </h1>
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-300">
-            CPU/GPU性能、機材選び、無料ゲーム情報など、PC環境づくりで確認したい情報をツールと記事で整理しています。
+          <p className="mt-5 max-w-2xl text-sm leading-relaxed text-gray-200 sm:text-base">
+            PC、スマホ、配信機材、AIツールまで。スペック・価格・用途を横断して、いま選ぶべきものを整理できます。
           </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link
+              href="/tools/future-desk-diagnosis"
+              className="rounded-lg bg-brand-green px-5 py-3 text-sm font-black text-brand-dark shadow-lg shadow-brand-green/20 transition hover:bg-lime-300"
+            >
+              未来デスク診断をはじめる
+            </Link>
+            <Link
+              href="/tools"
+              className="rounded-lg border border-white/30 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:border-brand-green hover:text-brand-green"
+            >
+              ツールを見る
+            </Link>
+          </div>
+          <div className="mt-10 grid max-w-3xl grid-cols-3 gap-3 border-t border-white/15 pt-5 text-xs text-gray-300">
+            <div>
+              <p className="text-lg font-black text-white">{SITE_TOOLS.length}</p>
+              <p className="mt-1">無料ツール</p>
+            </div>
+            <div>
+              <p className="text-lg font-black text-white">{articles.length}</p>
+              <p className="mt-1">公開記事</p>
+            </div>
+            <div>
+              <p className="text-lg font-black text-white">用途別</p>
+              <p className="mt-1">比較・診断</p>
+            </div>
+          </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-5xl px-4 py-10">
-        <div className="mb-5">
-          <p className="text-xs font-black uppercase tracking-wider text-brand-green">Tools</p>
-          <h2 className="mt-1 text-xl font-extrabold text-brand-text">ツール一覧</h2>
+        <div className="mb-6 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wider text-brand-green">Start Here</p>
+            <h2 className="mt-1 text-2xl font-extrabold text-brand-text">まず使いたいツール</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-500">
+              迷いがちな買い物や環境づくりを、診断・比較・用途別チェックで短く整理します。
+            </p>
+          </div>
+          <Link href="/tools" className="text-sm font-black text-brand-green hover:underline">
+            すべてのツール
+          </Link>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          {SITE_TOOLS.map((tool) => (
-            <Link
-              key={tool.href}
-              href={tool.href}
-              className="group rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-brand-green hover:shadow-md"
-            >
-              <div className="mb-4 flex items-start justify-between gap-4">
-                <Image src={tool.icon} alt="" width={44} height={44} className="shrink-0" />
-                <span className="rounded-full bg-brand-green/10 px-2.5 py-1 text-[11px] font-black text-brand-dark">
-                  {tool.label}
-                </span>
-              </div>
-              <h3 className="text-lg font-extrabold text-brand-text">{tool.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-gray-500">{tool.description}</p>
-              <p className="mt-4 text-xs font-black text-brand-green">
-                開く <span className="transition-transform group-hover:translate-x-1">→</span>
-              </p>
-            </Link>
+          {featuredTools.map((tool, index) => (
+            <ToolCard key={tool.href} tool={tool} featured={index === 0} />
           ))}
         </div>
       </section>
 
       {recent.length > 0 && (
-        <section className="mx-auto max-w-5xl px-4 pb-12">
-          <div className="mb-5 flex items-center justify-between">
+        <section className="mx-auto max-w-5xl px-4 pb-14">
+          <div className="mb-6 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-black uppercase tracking-wider text-brand-green">Articles</p>
-              <h2 className="mt-1 text-xl font-extrabold text-brand-text">記事一覧</h2>
+              <h2 className="mt-1 text-2xl font-extrabold text-brand-text">最新のガイド</h2>
             </div>
-            <Link href="/articles" className="text-xs font-bold text-brand-green hover:underline">
+            <Link href="/articles" className="shrink-0 text-sm font-black text-brand-green hover:underline">
               すべて見る
             </Link>
           </div>
