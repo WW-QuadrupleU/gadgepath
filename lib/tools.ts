@@ -1,5 +1,13 @@
 export const SITE_TOOLS = [
   {
+    title: '未来デスク・ガジェット性格診断',
+    description:
+      '8問でガジェット性格タイプ、理想の未来デスク、買う順番、避けるべき買い物がわかります。',
+    href: '/tools/future-desk-diagnosis',
+    icon: '/icons/desk-simulator.png',
+    label: '性格診断',
+  },
+  {
     title: 'CPU・GPU性能比較',
     description:
       'CPU、GPU、CPU+GPU構成を選んで、ゲーム性能、制作性能、AI処理、消費電力、コスパを比較できます。',
