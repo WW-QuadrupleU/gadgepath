@@ -75,6 +75,9 @@
 .article-content table td {
   @apply border border-gray-200 px-3 py-2;
 }
+.article-content table img {
+  @apply mx-auto h-24 w-24 rounded-lg object-contain bg-white;
+}
 .article-content table tr:nth-child(even) td {
   @apply bg-gray-50;
 }
