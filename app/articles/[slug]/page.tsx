@@ -5,7 +5,7 @@ import type { Product } from '@/lib/notion'
 import ArticleCard from '@/components/ArticleCard'
 import { BASE_URL, MOSHIMO_BASE } from '@/lib/constants'
 import { buildAffiliateUrl } from '@/lib/affiliate'
-import { normalize, preprocessContent } from '@/lib/article-preprocessor'
+import { extractMentionedProducts, normalize, preprocessContent } from '@/lib/article-preprocessor'
 import ProductCard from '@/components/ProductCard'
 import InlineProductCard from '@/components/InlineProductCard'
 import ReactMarkdown from 'react-markdown'
@@ -139,7 +139,12 @@ export default async function ArticlePage({ params }: Props) {
     if (b.numericPrice) return 1
     return a.displayOrder - b.displayOrder
   })
-  const structuredProducts = productsByPrice.filter((product) => product.name && product.rakutenUrl)
+  // 本文を前処理し、実際に商品カードが挿入された商品だけを表示対象にする。
+  // これにより Notion 側で「記事スラッグ」が誤って多数の商品に紐づいていても、
+  // 本文に登場していない商品は記事下部・JSON-LD のいずれにも出力されない。
+  const preprocessedContent = preprocessContent(article.content, productsByPrice)
+  const mentionedProducts = extractMentionedProducts(preprocessedContent, productsByPrice)
+  const structuredProducts = mentionedProducts.filter((product) => product.name && product.rakutenUrl)
   const canonicalUrl = `${BASE_URL}/articles/${article.slug}`
   const imageUrl = `${BASE_URL}/images/articles/${article.slug}.jpg`
   const categorySlug = CATEGORIES.find((category) => category.name === article.category)?.slug
@@ -270,7 +275,7 @@ export default async function ArticlePage({ params }: Props) {
         <Link href="/disclosure" className="text-brand-green hover:underline ml-1">詳細はこちら</Link>
       </div>
 
-      {productsByPrice.length > 0 && (
+      {mentionedProducts.length > 0 && (
         <div className="bg-white border border-brand-green/30 rounded-lg px-4 py-3 mb-8 text-xs text-gray-600 leading-relaxed">
           本記事は、公式情報・販売ページ・公開レビュー・口コミ傾向をもとに、購入前に確認したいポイントを整理しています。
           実機レビューではありません。価格・販売状況は変動するため、購入前に各販売ページで最新情報をご確認ください。
@@ -369,18 +374,18 @@ export default async function ArticlePage({ params }: Props) {
             },
           }}
         >
-          {preprocessContent(article.content, productsByPrice)}
+          {preprocessedContent}
         </ReactMarkdown>
       </article>
 
-      {/* 商品一覧（全商品を表示・楽天URLなしはボタン非表示） */}
-      {productsByPrice.length > 0 && (
+      {/* 商品一覧（本文に実際に登場した商品のみ・楽天URLなしはボタン非表示） */}
+      {mentionedProducts.length > 0 && (
         <section className="mt-12 pt-8 border-t border-gray-200">
           <h2 className="text-base font-bold text-brand-text mb-4">
             この記事で紹介した商品
           </h2>
           <div className="space-y-3">
-            {productsByPrice.map((product) => (
+            {mentionedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

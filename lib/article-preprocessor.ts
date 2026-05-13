@@ -229,3 +229,38 @@ export function preprocessContent(content: string, products: Product[]): string 
 
   return finalResult.join('\n')
 }
+
+/**
+ * preprocessContent 済み本文から、実際に商品カードが挿入された商品だけを抽出する。
+ * Notion 側の「記事スラッグ」multi_select に商品が誤って多数紐づいていても、
+ * 本文中に言及されていない商品はここで除外される。
+ */
+export function extractMentionedProducts(preprocessedContent: string, products: Product[]): Product[] {
+  const used = new Set<string>()
+
+  const nameRegex = /^!!GADGE_CARD_NAME!!:(.+)$/gm
+  let m: RegExpExecArray | null
+  while ((m = nameRegex.exec(preprocessedContent)) !== null) {
+    try {
+      const name = decodeURIComponent(m[1].trim())
+      if (name) used.add(name)
+    } catch {}
+  }
+
+  const urlRegex = /^!!GADGE_CARD_URL!!:(.+)$/gm
+  while ((m = urlRegex.exec(preprocessedContent)) !== null) {
+    try {
+      const urlText = decodeURIComponent(m[1].trim())
+      const url = new URL(urlText)
+      const keyword = url.searchParams.get('k') || ''
+      const nk = normalize(keyword)
+      const matched = products.find((p) => {
+        const n = normalize(p.name), s = normalize(p.slug)
+        return nk.includes(n) || n.includes(nk) || nk.includes(s) || s.includes(nk)
+      })
+      if (matched) used.add(matched.name)
+    } catch {}
+  }
+
+  return products.filter((p) => used.has(p.name))
+}
